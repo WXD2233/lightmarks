@@ -947,6 +947,7 @@ type healthManager struct {
 	completed    int
 	startedAt    time.Time
 	allowPrivate bool
+	onComplete   func([]bookmark, map[string]siteHealth, map[string]siteHealth)
 }
 
 func newHealthManager(allowPrivate bool) *healthManager {
@@ -989,6 +990,7 @@ func (m *healthManager) start(items []bookmark) bool {
 			delete(m.results, id)
 		}
 	}
+	previous := cloneHealthResults(m.results)
 	m.running = len(items) > 0
 	m.total = len(items)
 	m.completed = 0
@@ -997,11 +999,11 @@ func (m *healthManager) start(items []bookmark) bool {
 	if len(items) == 0 {
 		return true
 	}
-	go m.run(items)
+	go m.run(items, previous)
 	return true
 }
 
-func (m *healthManager) run(items []bookmark) {
+func (m *healthManager) run(items []bookmark, previous map[string]siteHealth) {
 	jobs := make(chan bookmark)
 	var workers sync.WaitGroup
 	workerCount := min(checkWorkers, len(items))
@@ -1025,7 +1027,26 @@ func (m *healthManager) run(items []bookmark) {
 	workers.Wait()
 	m.mu.Lock()
 	m.running = false
+	current := cloneHealthResults(m.results)
+	onComplete := m.onComplete
 	m.mu.Unlock()
+	if onComplete != nil {
+		onComplete(items, previous, current)
+	}
+}
+
+func (m *healthManager) setOnComplete(callback func([]bookmark, map[string]siteHealth, map[string]siteHealth)) {
+	m.mu.Lock()
+	m.onComplete = callback
+	m.mu.Unlock()
+}
+
+func cloneHealthResults(results map[string]siteHealth) map[string]siteHealth {
+	cloned := make(map[string]siteHealth, len(results))
+	for id, result := range results {
+		cloned[id] = result
+	}
+	return cloned
 }
 
 func (m *healthManager) forget(id string) {
@@ -1039,6 +1060,9 @@ type app struct {
 	preferences    *preferencesStore
 	credentials    *credentialStore
 	health         *healthManager
+	notifications  *notificationStore
+	notifier       *notificationService
+	scheduler      *monitorScheduler
 	backgroundPath string
 	iconsDir       string
 	iconMu         sync.Mutex
@@ -1072,6 +1096,9 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("POST /api/health/check", a.requireAuth(a.handleHealthCheck))
 	mux.HandleFunc("GET /api/settings", a.handleSettings)
 	mux.HandleFunc("PUT /api/settings", a.requireAuth(a.handleSettingsUpdate))
+	mux.HandleFunc("GET /api/notifications", a.requireAuth(a.handleNotificationSettings))
+	mux.HandleFunc("PUT /api/notifications", a.requireAuth(a.handleNotificationSettingsUpdate))
+	mux.HandleFunc("POST /api/notifications/test", a.requireAuth(a.handleNotificationTest))
 	mux.HandleFunc("GET /api/note", a.requireAuth(a.handleNote))
 	mux.HandleFunc("PUT /api/note", a.requireAuth(a.handleNoteUpdate))
 	mux.HandleFunc("GET /api/background", a.requireAuth(a.handleBackground))
@@ -1850,16 +1877,29 @@ func main() {
 	if err := os.MkdirAll(iconsDir, 0o700); err != nil {
 		log.Fatal(err)
 	}
+	notifications, err := newNotificationStore(filepath.Join(filepath.Dir(dataPath), "notifications.json"), secret)
+	if err != nil {
+		log.Fatal(err)
+	}
 	allowPrivateTargets := strings.EqualFold(os.Getenv("ALLOW_PRIVATE_TARGETS"), "true")
+	health := newHealthManager(allowPrivateTargets)
+	notifier := newNotificationService(notifications)
 	application := &app{
 		store:          dataStore,
 		preferences:    preferences,
 		credentials:    credentials,
-		health:         newHealthManager(allowPrivateTargets),
+		health:         health,
+		notifications:  notifications,
+		notifier:       notifier,
 		backgroundPath: filepath.Join(filepath.Dir(dataPath), "background.image"),
 		iconsDir:       iconsDir,
 		secret:         secret,
 	}
+	application.scheduler = newMonitorScheduler(dataStore, health, notifications)
+	health.setOnComplete(func(items []bookmark, previous, current map[string]siteHealth) {
+		settings := preferences.get()
+		notifier.notifyChanges(settings.SiteName, settings.TimeZone, collectHealthChanges(items, previous, current))
+	})
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5856"
@@ -1876,6 +1916,7 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	go application.scheduler.run(ctx)
 	go func() {
 		log.Printf("Lightmarks listening on :%s", port)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

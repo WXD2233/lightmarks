@@ -345,6 +345,16 @@
 	.color-picker { width: 44px; min-width: 44px; padding: 4px; cursor: pointer; }
 	.color-value { min-width: 62px; color: var(--muted); font-size: 12px; font-weight: 750; text-transform: uppercase; }
     .appearance-controls { align-items: center; }
+    .auto-monitor-controls { align-items: center; }
+    .interval-control { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 750; }
+    .interval-input { width: 92px; }
+    .notification-section .settings-row { align-items: start; }
+    .notification-fields { margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .notification-field { min-width: 0; display: grid; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 750; }
+    .notification-field.wide { grid-column: 1 / -1; }
+    .notification-secret-state { min-height: 17px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .compact-check { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; cursor: pointer; }
+    .compact-check input { width: 16px; height: 16px; padding: 0; }
     .background-preview { width: 92px; height: 58px; border: 1px dashed var(--line); border-radius: 7px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-size: 11px; overflow: hidden; background-position: center; background-size: cover; }
     .background-preview.active { border-style: solid; color: transparent; }
     .combobox { position: relative; }
@@ -396,6 +406,9 @@
       .settings-input, .settings-input.wide { width: 100%; }
       .settings-actions .button { flex: 1; }
       .appearance-controls { justify-content: flex-start; }
+      .auto-monitor-controls { justify-content: flex-start; }
+      .notification-fields { grid-template-columns: 1fr; }
+      .notification-field.wide { grid-column: auto; }
     }
 
     @media (max-width: 480px) {
@@ -619,6 +632,72 @@
       </div>
 
       <div class="settings-group">
+        <h3 class="settings-group-title">监测与通知</h3>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>自动检测</h3><p>由 VPS 后台定时检查全部网站，默认每 10 分钟运行一次。</p></div>
+            <div class="settings-actions auto-monitor-controls">
+              <label class="toggle-control" title="开启自动检测">
+                <input id="monitorEnabledInput" type="checkbox">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span id="monitorToggleLabel">已开启</span>
+              </label>
+              <label class="interval-control"><input class="interval-input" id="monitorIntervalInput" type="number" min="1" max="1440" step="1" inputmode="numeric" aria-label="自动检测间隔"><span>分钟</span></label>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section notification-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>Telegram 通知</h3><p>通过 Telegram Bot 发送首次异常、状态恶化和恢复消息。</p></div>
+            <div class="settings-actions">
+              <label class="toggle-control" title="开启 Telegram 通知">
+                <input id="telegramEnabledInput" type="checkbox">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span id="telegramToggleLabel">已关闭</span>
+              </label>
+              <button class="button secondary" id="testTelegramButton" type="button">保存并测试</button>
+            </div>
+          </div>
+          <div class="notification-fields">
+            <label class="notification-field wide"><span>Bot Token</span><input id="telegramTokenInput" type="password" maxlength="256" autocomplete="new-password" placeholder="从 BotFather 获取"></label>
+            <label class="notification-field"><span>Chat ID</span><input id="telegramChatIdInput" type="text" maxlength="128" autocomplete="off" placeholder="例如 -1001234567890"></label>
+            <div class="notification-field">
+              <span>密钥状态</span>
+              <p class="notification-secret-state" id="telegramTokenStatus">尚未保存</p>
+              <label class="compact-check"><input id="clearTelegramTokenInput" type="checkbox">清除已保存 Token</label>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section notification-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>邮箱通知</h3><p>通过支持 TLS 的 SMTP 服务发送网站状态变更邮件。</p></div>
+            <div class="settings-actions">
+              <label class="toggle-control" title="开启邮箱通知">
+                <input id="emailEnabledInput" type="checkbox">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span id="emailToggleLabel">已关闭</span>
+              </label>
+              <button class="button secondary" id="testEmailButton" type="button">保存并测试</button>
+            </div>
+          </div>
+          <div class="notification-fields">
+            <label class="notification-field"><span>SMTP 服务器</span><input id="smtpHostInput" type="text" maxlength="253" autocomplete="off" placeholder="smtp.example.com"></label>
+            <label class="notification-field"><span>端口</span><input id="smtpPortInput" type="number" min="1" max="65535" step="1" inputmode="numeric" value="465"></label>
+            <label class="notification-field"><span>加密方式</span><select id="smtpSecuritySelect"><option value="auto">自动（推荐）</option><option value="tls">SSL/TLS</option><option value="starttls">STARTTLS</option></select></label>
+            <label class="notification-field"><span>SMTP 账户</span><input id="smtpUsernameInput" type="text" maxlength="320" autocomplete="username" placeholder="通常为邮箱地址"></label>
+            <label class="notification-field"><span>密码或授权码</span><input id="smtpPasswordInput" type="password" maxlength="512" autocomplete="new-password" placeholder="留空表示不修改"></label>
+            <div class="notification-field">
+              <span>密钥状态</span>
+              <p class="notification-secret-state" id="smtpPasswordStatus">尚未保存</p>
+              <label class="compact-check"><input id="clearSmtpPasswordInput" type="checkbox">清除已保存密码</label>
+            </div>
+            <label class="notification-field"><span>发件人</span><input id="smtpFromInput" type="email" maxlength="320" autocomplete="email" placeholder="sender@example.com"></label>
+            <label class="notification-field"><span>收件人</span><input id="smtpToInput" type="text" maxlength="1000" autocomplete="off" placeholder="receiver@example.com"></label>
+          </div>
+        </section>
+      </div>
+
+      <div class="settings-group">
         <h3 class="settings-group-title">数据与安全</h3>
         <section class="settings-section">
           <div class="settings-row">
@@ -764,6 +843,19 @@
 		note: "",
 		glassEnabled: true,
 		glassColor: "#ffffff",
+		monitorEnabled: true,
+		monitorIntervalMinutes: 10,
+		telegramEnabled: false,
+		telegramBotTokenSet: false,
+		telegramChatId: "",
+		emailEnabled: false,
+		smtpHost: "",
+		smtpPort: 465,
+		smtpUsername: "",
+		smtpPasswordSet: false,
+		smtpFrom: "",
+		smtpTo: "",
+		smtpSecurity: "auto",
         bookmarks: [],
         health: {},
         healthRunning: false,
@@ -788,6 +880,9 @@
 		loginSiteName: $("#loginSiteName"), mastSiteName: $("#mastSiteName"), mastSiteSubtitle: $("#mastSiteSubtitle"), siteNameInput: $("#siteNameInput"), siteSubtitleInput: $("#siteSubtitleInput"), timeZoneSelect: $("#timeZoneSelect"), saveSettingsButton: $("#saveSettingsButton"),
 		monitorTime: $("#monitorTime"), monitorDate: $("#monitorDate"), monitorWeek: $("#monitorWeek"), monitorZone: $("#monitorZone"),
 		glassEnabledInput: $("#glassEnabledInput"), glassToggleLabel: $("#glassToggleLabel"), glassColorInput: $("#glassColorInput"), glassColorValue: $("#glassColorValue"),
+		monitorEnabledInput: $("#monitorEnabledInput"), monitorToggleLabel: $("#monitorToggleLabel"), monitorIntervalInput: $("#monitorIntervalInput"),
+		telegramEnabledInput: $("#telegramEnabledInput"), telegramToggleLabel: $("#telegramToggleLabel"), telegramTokenInput: $("#telegramTokenInput"), telegramChatIdInput: $("#telegramChatIdInput"), telegramTokenStatus: $("#telegramTokenStatus"), clearTelegramTokenInput: $("#clearTelegramTokenInput"), testTelegramButton: $("#testTelegramButton"),
+		emailEnabledInput: $("#emailEnabledInput"), emailToggleLabel: $("#emailToggleLabel"), smtpHostInput: $("#smtpHostInput"), smtpPortInput: $("#smtpPortInput"), smtpSecuritySelect: $("#smtpSecuritySelect"), smtpUsernameInput: $("#smtpUsernameInput"), smtpPasswordInput: $("#smtpPasswordInput"), smtpPasswordStatus: $("#smtpPasswordStatus"), clearSmtpPasswordInput: $("#clearSmtpPasswordInput"), smtpFromInput: $("#smtpFromInput"), smtpToInput: $("#smtpToInput"), testEmailButton: $("#testEmailButton"),
         searchInput: $("#searchInput"), statusSegments: $("#statusSegments"), categorySelect: $("#categorySelect"), checkButton: $("#checkButton"),
         noticeStack: $("#noticeStack"), groupList: $("#groupList"), emptyState: $("#emptyState"), emptyTitle: $("#emptyTitle"), emptyCopy: $("#emptyCopy"),
         pager: $("#pager"), pagerInfo: $("#pagerInfo"), prevPage: $("#prevPage"), nextPage: $("#nextPage"), importFile: $("#importFile"), themeButton: $("#themeButton"),
@@ -848,8 +943,9 @@
           const session = await api("/api/session");
           if (!session.authenticated) return showLogin();
           showApp();
-          await loadBookmarks();
+		  await loadBookmarks();
 		  await loadSettings(true);
+		  await loadNotificationSettings();
 		  await loadNote();
           await loadHealth(true);
         } catch {
@@ -871,6 +967,118 @@
         const settings = await api("/api/settings");
 		applySettings(settings, includeBackground);
       }
+
+	  async function loadNotificationSettings() {
+		const settings = await api("/api/notifications");
+		applyNotificationSettings(settings);
+	  }
+
+	  function applyNotificationSettings(settings) {
+		state.monitorEnabled = settings.monitorEnabled !== false;
+		state.monitorIntervalMinutes = Number(settings.intervalMinutes) || 10;
+		state.telegramEnabled = Boolean(settings.telegramEnabled);
+		state.telegramBotTokenSet = Boolean(settings.telegramBotTokenSet);
+		state.telegramChatId = String(settings.telegramChatId || "");
+		state.emailEnabled = Boolean(settings.emailEnabled);
+		state.smtpHost = String(settings.smtpHost || "");
+		state.smtpPort = Number(settings.smtpPort) || 465;
+		state.smtpUsername = String(settings.smtpUsername || "");
+		state.smtpPasswordSet = Boolean(settings.smtpPasswordSet);
+		state.smtpFrom = String(settings.smtpFrom || "");
+		state.smtpTo = String(settings.smtpTo || "");
+		state.smtpSecurity = ["auto", "tls", "starttls"].includes(settings.smtpSecurity) ? settings.smtpSecurity : "auto";
+
+		elements.monitorEnabledInput.checked = state.monitorEnabled;
+		elements.monitorToggleLabel.textContent = state.monitorEnabled ? "已开启" : "已关闭";
+		elements.monitorIntervalInput.value = state.monitorIntervalMinutes;
+		elements.telegramEnabledInput.checked = state.telegramEnabled;
+		elements.telegramToggleLabel.textContent = state.telegramEnabled ? "已开启" : "已关闭";
+		elements.telegramTokenInput.value = "";
+		elements.telegramTokenInput.placeholder = state.telegramBotTokenSet ? "已保存，留空表示不修改" : "从 BotFather 获取";
+		elements.telegramChatIdInput.value = state.telegramChatId;
+		elements.telegramTokenStatus.textContent = state.telegramBotTokenSet ? "Token 已加密保存" : "尚未保存";
+		elements.clearTelegramTokenInput.checked = false;
+		elements.emailEnabledInput.checked = state.emailEnabled;
+		elements.emailToggleLabel.textContent = state.emailEnabled ? "已开启" : "已关闭";
+		elements.smtpHostInput.value = state.smtpHost;
+		elements.smtpPortInput.value = state.smtpPort;
+		elements.smtpUsernameInput.value = state.smtpUsername;
+		elements.smtpPasswordInput.value = "";
+		elements.smtpPasswordInput.placeholder = state.smtpPasswordSet ? "已保存，留空表示不修改" : "密码或授权码";
+		elements.smtpPasswordStatus.textContent = state.smtpPasswordSet ? "密码已加密保存" : "尚未保存";
+		elements.clearSmtpPasswordInput.checked = false;
+		elements.smtpFromInput.value = state.smtpFrom;
+		elements.smtpToInput.value = state.smtpTo;
+		elements.smtpSecuritySelect.value = state.smtpSecurity;
+	  }
+
+	  function buildNotificationPayload() {
+		const intervalMinutes = Number(elements.monitorIntervalInput.value);
+		if (!Number.isInteger(intervalMinutes) || intervalMinutes < 1 || intervalMinutes > 1440) {
+		  elements.monitorIntervalInput.focus();
+		  throw new Error("自动检测间隔需要在 1 到 1440 分钟之间");
+		}
+		const telegramToken = elements.telegramTokenInput.value.trim();
+		const telegramChatId = elements.telegramChatIdInput.value.trim();
+		const clearTelegramToken = elements.clearTelegramTokenInput.checked;
+		const telegramHasToken = Boolean(telegramToken || (state.telegramBotTokenSet && !clearTelegramToken));
+		if (elements.telegramEnabledInput.checked && (!telegramHasToken || !telegramChatId)) {
+		  throw new Error("启用 Telegram 前需要填写 Bot Token 和 Chat ID");
+		}
+		const smtpPort = Number(elements.smtpPortInput.value);
+		if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+		  elements.smtpPortInput.focus();
+		  throw new Error("SMTP 端口无效");
+		}
+		const smtpPassword = elements.smtpPasswordInput.value;
+		const clearSmtpPassword = elements.clearSmtpPasswordInput.checked;
+		const smtpHasPassword = Boolean(smtpPassword || (state.smtpPasswordSet && !clearSmtpPassword));
+		const smtpUsername = elements.smtpUsernameInput.value.trim();
+		if (elements.emailEnabledInput.checked) {
+		  if (!elements.smtpHostInput.value.trim() || !elements.smtpFromInput.value.trim() || !elements.smtpToInput.value.trim()) {
+			throw new Error("启用邮箱通知前需要填写 SMTP 服务器、发件人和收件人");
+		  }
+		  if (smtpUsername && !smtpHasPassword) throw new Error("请填写 SMTP 密码或授权码");
+		}
+		const payload = {
+		  monitorEnabled: elements.monitorEnabledInput.checked,
+		  intervalMinutes,
+		  telegramEnabled: elements.telegramEnabledInput.checked,
+		  telegramChatId,
+		  clearTelegramBotToken: clearTelegramToken,
+		  emailEnabled: elements.emailEnabledInput.checked,
+		  smtpHost: elements.smtpHostInput.value.trim(),
+		  smtpPort,
+		  smtpUsername,
+		  smtpFrom: elements.smtpFromInput.value.trim(),
+		  smtpTo: elements.smtpToInput.value.trim(),
+		  smtpSecurity: elements.smtpSecuritySelect.value,
+		  clearSmtpPassword
+		};
+		if (telegramToken) payload.telegramBotToken = telegramToken;
+		if (smtpPassword) payload.smtpPassword = smtpPassword;
+		return payload;
+	  }
+
+	  async function saveNotificationSettings() {
+		const result = await api("/api/notifications", { method: "PUT", body: buildNotificationPayload() });
+		applyNotificationSettings(result);
+		return result;
+	  }
+
+	  async function testNotification(channel) {
+		const button = channel === "telegram" ? elements.testTelegramButton : elements.testEmailButton;
+		button.disabled = true;
+		try {
+		  await saveNotificationSettings();
+		  const result = await api("/api/notifications/test", { method: "POST", body: { channel } });
+		  toast(result.message || "测试通知已发送");
+		} catch (error) {
+		  toast(error.message, true);
+		} finally {
+		  button.disabled = false;
+		}
+	  }
 
 	  function applySettings(settings, includeBackground = true) {
 		applySiteName(settings.siteName);
@@ -970,6 +1178,7 @@
 		}
 		elements.saveSettingsButton.disabled = true;
 		try {
+		  await saveNotificationSettings();
 		  const settings = await api("/api/settings", {
 			method: "PUT",
 			body: {
@@ -988,6 +1197,7 @@
 		  applySiteSubtitle(state.siteSubtitle);
 		  applyTimeZone(state.timeZone);
 		  applyGlass(state);
+		  applyNotificationSettings(state);
 		  toast(error.message, true);
 		} finally {
 		  elements.saveSettingsButton.disabled = false;
@@ -1740,6 +1950,7 @@
           showApp();
           await loadBookmarks();
 		  await loadSettings(true);
+		  await loadNotificationSettings();
 		  await loadNote();
           await loadHealth(true);
         } catch (error) { elements.loginError.textContent = error.message; }
@@ -1782,6 +1993,7 @@
 		elements.siteSubtitleInput.value = state.siteSubtitle;
 		elements.timeZoneSelect.value = state.timeZone;
 		applyGlass(state);
+		applyNotificationSettings(state);
 		settingsDirty = false;
 		elements.settingsDialog.showModal();
 	  }
@@ -1809,6 +2021,26 @@
 		elements.glassColorValue.value = color.toUpperCase();
 		settingsDirty = true;
 	  });
+	  elements.monitorEnabledInput.addEventListener("change", () => {
+		elements.monitorToggleLabel.textContent = elements.monitorEnabledInput.checked ? "已开启" : "已关闭";
+		settingsDirty = true;
+	  });
+	  elements.telegramEnabledInput.addEventListener("change", () => {
+		elements.telegramToggleLabel.textContent = elements.telegramEnabledInput.checked ? "已开启" : "已关闭";
+		settingsDirty = true;
+	  });
+	  elements.emailEnabledInput.addEventListener("change", () => {
+		elements.emailToggleLabel.textContent = elements.emailEnabledInput.checked ? "已开启" : "已关闭";
+		settingsDirty = true;
+	  });
+	  [elements.monitorIntervalInput, elements.telegramTokenInput, elements.telegramChatIdInput, elements.smtpHostInput, elements.smtpPortInput, elements.smtpUsernameInput, elements.smtpPasswordInput, elements.smtpFromInput, elements.smtpToInput].forEach((input) => {
+		input.addEventListener("input", () => { settingsDirty = true; });
+	  });
+	  [elements.smtpSecuritySelect, elements.clearTelegramTokenInput, elements.clearSmtpPasswordInput].forEach((input) => {
+		input.addEventListener("change", () => { settingsDirty = true; });
+	  });
+	  elements.testTelegramButton.addEventListener("click", () => testNotification("telegram"));
+	  elements.testEmailButton.addEventListener("click", () => testNotification("email"));
 	  elements.iconUploadButton.addEventListener("click", () => elements.bookmarkIconFile.click());
 	  elements.bookmarkIconFile.addEventListener("change", () => chooseIconFile(elements.bookmarkIconFile.files[0]));
 	  elements.iconDetectButton.addEventListener("click", () => {
@@ -1916,6 +2148,7 @@
 		  applySiteSubtitle(state.siteSubtitle);
 		  applyTimeZone(state.timeZone);
 		  applyGlass(state);
+		  applyNotificationSettings(state);
 		}
 		settingsDirty = false;
 	  });

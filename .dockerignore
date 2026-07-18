@@ -1,6 +1,9 @@
 .git
 .env
 data
+release
+dist
 node_modules
 *.log
+*.exe
 lightmarks
