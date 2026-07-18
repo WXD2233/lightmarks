@@ -57,7 +57,7 @@ install -d -m 0700 -o "$SERVICE_USER" -g "$SERVICE_USER" "$DATA_DIR"
 new_install=false
 if [ ! -f "$ENV_FILE" ]; then
   new_install=true
-  initial_password="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20)"
+  initial_password="123123"
   session_secret="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
   umask 077
   cat >"$ENV_FILE" <<EOF

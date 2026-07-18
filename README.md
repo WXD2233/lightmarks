@@ -26,7 +26,7 @@
 curl -fsSL https://raw.githubusercontent.com/WXD2233/lightmarks/main/install.sh | sudo sh
 ```
 
-安装脚本会自动下载并校验最新发布包，创建低权限运行用户，将数据保存到 `/var/lib/lightmarks`，并注册 `lightmarks.service`。首次安装会在终端显示随机初始密码，请登录后立即修改。
+安装脚本会自动下载并校验最新发布包，创建低权限运行用户，将数据保存到 `/var/lib/lightmarks`，并注册 `lightmarks.service`。首次登录密码为 `123123`，请登录后立即在设置中修改。
 
 默认端口为 `5856`。如果 VPS 启用了防火墙，需要放行该 TCP 端口，随后访问：
 

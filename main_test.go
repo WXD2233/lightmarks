@@ -266,3 +266,16 @@ func TestCredentialStoreChangesPasswordAndPersists(t *testing.T) {
 		t.Fatal("credentials file contains the plaintext password")
 	}
 }
+
+func TestDefaultInitialPassword(t *testing.T) {
+	credentials, err := newCredentialStore(filepath.Join(t.TempDir(), "credentials.json"), defaultInitialPassword)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !credentials.verify(defaultInitialPassword) {
+		t.Fatal("default initial password was not accepted")
+	}
+	if err := validateInitialPassword("123456"); err == nil {
+		t.Fatal("unexpectedly accepted a non-default short initial password")
+	}
+}
