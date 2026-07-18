@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -156,6 +158,32 @@ func TestTelegramTestNotification(t *testing.T) {
 		}
 	default:
 		t.Fatal("Telegram request was not received")
+	}
+}
+
+func TestTelegramNotificationReusesConnections(t *testing.T) {
+	var connections atomic.Int64
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			connections.Add(1)
+		}
+	}
+	server.Start()
+	defer server.Close()
+
+	service := &notificationService{httpClient: server.Client(), telegramAPIBase: server.URL}
+	config := notificationConfig{TelegramBotToken: "123456:test-token", TelegramChatID: "-100123"}
+	for index := 0; index < 30; index++ {
+		if err := service.sendTelegram(context.Background(), config, "test"); err != nil {
+			t.Fatalf("send %d failed: %v", index, err)
+		}
+	}
+	if got := connections.Load(); got > 2 {
+		t.Fatalf("Telegram responses opened %d connections; expected keep-alive reuse", got)
 	}
 }
 

@@ -44,6 +44,7 @@ const (
 	sessionDuration        = 30 * 24 * time.Hour
 	checkWorkers           = 6
 	checkTimeout           = 6 * time.Second
+	maxCheckDrainBytes     = 8 << 10
 	maxBackgroundBytes     = 2 << 20
 	maxBackgroundPixels    = 20_000_000
 	defaultSiteName        = "轻签监控台"
@@ -829,7 +830,8 @@ func newHealthChecker(allowPrivate bool) *healthChecker {
 		DialContext:            checker.dialContext,
 		ForceAttemptHTTP2:      true,
 		MaxIdleConns:           12,
-		MaxIdleConnsPerHost:    1,
+		MaxIdleConnsPerHost:    checkWorkers,
+		MaxConnsPerHost:        checkWorkers,
 		IdleConnTimeout:        30 * time.Second,
 		TLSHandshakeTimeout:    4 * time.Second,
 		ResponseHeaderTimeout:  5 * time.Second,
@@ -910,7 +912,7 @@ func (c *healthChecker) check(item bookmark) siteHealth {
 		result.Error = friendlyCheckError(err)
 		return result
 	}
-	_, _ = io.CopyN(io.Discard, response.Body, 1)
+	_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, maxCheckDrainBytes))
 	_ = response.Body.Close()
 	result.HTTPCode = response.StatusCode
 	if response.StatusCode < http.StatusInternalServerError {

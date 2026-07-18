@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -14,7 +15,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestValidateBookmark(t *testing.T) {
@@ -133,6 +136,82 @@ func TestHealthChecker(t *testing.T) {
 	if blocked.Status != "down" || blocked.Error != "私有或保留地址已被保护" {
 		t.Fatalf("expected private target blocked, got %#v", blocked)
 	}
+}
+
+func TestHealthCheckerReusesSmallResponses(t *testing.T) {
+	var connections atomic.Int64
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("healthy"))
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateNew {
+			connections.Add(1)
+		}
+	}
+	server.Start()
+	defer server.Close()
+
+	checker := newHealthChecker(true)
+	transport := checker.client.Transport.(*http.Transport)
+	defer transport.CloseIdleConnections()
+	if transport.MaxConnsPerHost != checkWorkers || transport.MaxIdleConnsPerHost != checkWorkers {
+		t.Fatalf("health checker connection limits are not aligned with worker count: %#v", transport)
+	}
+	for index := 0; index < 30; index++ {
+		result := checker.check(bookmark{ID: "same-host", URL: server.URL + "/healthz"})
+		if result.Status != "online" {
+			t.Fatalf("check %d failed: %#v", index, result)
+		}
+	}
+	if got := connections.Load(); got > 2 {
+		t.Fatalf("small responses opened %d connections; expected keep-alive reuse", got)
+	}
+}
+
+func TestHealthManagerPrunesRemovedResults(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	manager := newHealthManager(true)
+	items := make([]bookmark, 20)
+	for index := range items {
+		items[index] = bookmark{ID: fmt.Sprintf("old-%d", index), URL: server.URL}
+	}
+	if !manager.start(items) {
+		t.Fatal("expected first health run to start")
+	}
+	waitForHealthRun(t, manager)
+	if got := len(manager.snapshot().Results); got != len(items) {
+		t.Fatalf("first run retained %d results, want %d", got, len(items))
+	}
+
+	replacement := []bookmark{{ID: "replacement", URL: server.URL}}
+	if !manager.start(replacement) {
+		t.Fatal("expected replacement health run to start")
+	}
+	waitForHealthRun(t, manager)
+	snapshot := manager.snapshot()
+	if len(snapshot.Results) != 1 {
+		t.Fatalf("removed bookmarks left %d retained results", len(snapshot.Results))
+	}
+	if _, exists := snapshot.Results["replacement"]; !exists {
+		t.Fatal("replacement health result is missing")
+	}
+}
+
+func waitForHealthRun(t *testing.T, manager *healthManager) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		snapshot := manager.snapshot()
+		if !snapshot.Running && snapshot.Completed == snapshot.Total {
+			return
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("health run did not finish")
 }
 
 func TestStorePersistsAndDeduplicatesImports(t *testing.T) {

@@ -33,6 +33,7 @@ const (
 	maxMonitorIntervalMinutes     = 24 * 60
 	maxNotificationChanges        = 30
 	notificationSendTimeout       = 15 * time.Second
+	maxNotificationResponseBytes  = 8 << 10
 	notificationAAD               = "lightmarks-notifications-v1"
 )
 
@@ -589,6 +590,7 @@ func (s *notificationService) sendTelegram(ctx context.Context, config notificat
 		raw, _ := io.ReadAll(io.LimitReader(response.Body, 512))
 		return fmt.Errorf("Telegram API returned %d: %s", response.StatusCode, strings.TrimSpace(string(raw)))
 	}
+	_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, maxNotificationResponseBytes))
 	return nil
 }
 
