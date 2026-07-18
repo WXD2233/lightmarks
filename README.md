@@ -54,7 +54,9 @@ systemctl restart lightmarks
 
 Telegram 通知需要 Bot Token 和 Chat ID。邮箱通知支持端口 `465` 的 SSL/TLS，以及常用于端口 `587` 的 STARTTLS；多数邮箱服务需要使用单独生成的 SMTP 授权码。设置页中的“保存并测试”可分别验证两个通知渠道。
 
-卸载程序但保留数据：
+完全卸载程序：
+
+> **注意：** 以下命令会永久删除程序、服务、配置、登录密码、书签、背景图片和通知设置。需要保留书签时，请先在设置中导出 JSON 备份。
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/WXD2233/lightmarks/main/uninstall.sh | sudo sh
