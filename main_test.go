@@ -138,6 +138,20 @@ func TestHealthChecker(t *testing.T) {
 	}
 }
 
+func TestSecurityHeadersAllowLocalImagePreview(t *testing.T) {
+	handler := securityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	policy := response.Header().Get("Content-Security-Policy")
+	if !strings.Contains(policy, "img-src 'self' data: blob:") {
+		t.Fatalf("local image previews are blocked by CSP: %q", policy)
+	}
+}
+
 func TestHealthCheckerReusesSmallResponses(t *testing.T) {
 	var connections atomic.Int64
 	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

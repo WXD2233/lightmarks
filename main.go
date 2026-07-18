@@ -43,7 +43,7 @@ const (
 	maxSettingsBytes       = 8 << 10
 	sessionDuration        = 30 * 24 * time.Hour
 	checkWorkers           = 6
-	checkTimeout           = 6 * time.Second
+	checkTimeout           = 10 * time.Second
 	maxCheckDrainBytes     = 8 << 10
 	maxBackgroundBytes     = 2 << 20
 	maxBackgroundPixels    = 20_000_000
@@ -834,7 +834,7 @@ func newHealthChecker(allowPrivate bool) *healthChecker {
 		MaxConnsPerHost:        checkWorkers,
 		IdleConnTimeout:        30 * time.Second,
 		TLSHandshakeTimeout:    4 * time.Second,
-		ResponseHeaderTimeout:  5 * time.Second,
+		ResponseHeaderTimeout:  8 * time.Second,
 		ExpectContinueTimeout:  1 * time.Second,
 		MaxResponseHeaderBytes: 32 << 10,
 		DisableCompression:     true,
@@ -1826,7 +1826,7 @@ func requestIsHTTPS(r *http.Request) bool {
 
 func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
