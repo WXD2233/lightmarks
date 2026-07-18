@@ -44,6 +44,8 @@ const (
 	sessionDuration        = 30 * 24 * time.Hour
 	checkWorkers           = 6
 	checkTimeout           = 10 * time.Second
+	initialProbeTimeout    = 4 * time.Second
+	retryProbeTimeout      = 8 * time.Second
 	maxCheckDrainBytes     = 8 << 10
 	maxBackgroundBytes     = 2 << 20
 	maxBackgroundPixels    = 20_000_000
@@ -817,6 +819,7 @@ type healthChecker struct {
 	resolver     *net.Resolver
 	dialer       *net.Dialer
 	client       *http.Client
+	retryDelays  [2]time.Duration
 }
 
 func newHealthChecker(allowPrivate bool) *healthChecker {
@@ -824,6 +827,7 @@ func newHealthChecker(allowPrivate bool) *healthChecker {
 		allowPrivate: allowPrivate,
 		resolver:     net.DefaultResolver,
 		dialer:       &net.Dialer{Timeout: 4 * time.Second, KeepAlive: 20 * time.Second},
+		retryDelays:  [2]time.Duration{time.Second, 2 * time.Second},
 	}
 	transport := &http.Transport{
 		Proxy:                  nil,
@@ -895,16 +899,42 @@ func isBlockedTargetIP(ip net.IP) bool {
 }
 
 func (c *healthChecker) check(item bookmark) siteHealth {
+	attempts := [...]struct {
+		method  string
+		timeout time.Duration
+	}{
+		{method: http.MethodHead, timeout: initialProbeTimeout},
+		{method: http.MethodGet, timeout: retryProbeTimeout},
+		{method: http.MethodGet, timeout: checkTimeout},
+	}
+	var result siteHealth
+	for index, attempt := range attempts {
+		if index > 0 && c.retryDelays[index-1] > 0 {
+			time.Sleep(c.retryDelays[index-1])
+		}
+		result = c.checkOnce(item, attempt.method, attempt.timeout)
+		if result.Status == "online" || !shouldRetryHealthCheck(result) {
+			return result
+		}
+	}
+	return result
+}
+
+func (c *healthChecker) checkOnce(item bookmark, method string, timeout time.Duration) siteHealth {
 	started := time.Now()
 	result := siteHealth{ID: item.ID, Status: "down", CheckedAt: started.UTC()}
-	request, err := http.NewRequest(http.MethodGet, item.URL, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, method, item.URL, nil)
 	if err != nil {
 		result.Error = "网址格式无效"
 		return result
 	}
 	request.Header.Set("User-Agent", "Lightmarks-Health/1.0")
 	request.Header.Set("Accept", "text/html,application/xhtml+xml,application/json;q=0.8,*/*;q=0.5")
-	request.Header.Set("Range", "bytes=0-0")
+	if method == http.MethodGet {
+		request.Header.Set("Range", "bytes=0-0")
+	}
 	response, err := c.client.Do(request)
 	result.LatencyMS = time.Since(started).Milliseconds()
 	result.CheckedAt = time.Now().UTC()
@@ -915,12 +945,25 @@ func (c *healthChecker) check(item bookmark) siteHealth {
 	_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, maxCheckDrainBytes))
 	_ = response.Body.Close()
 	result.HTTPCode = response.StatusCode
+	if method == http.MethodHead && (response.StatusCode == http.StatusMethodNotAllowed || response.StatusCode == http.StatusNotImplemented) {
+		result.Error = "服务器不支持快速检测"
+		return result
+	}
 	if response.StatusCode < http.StatusInternalServerError {
 		result.Status = "online"
 		return result
 	}
 	result.Error = fmt.Sprintf("服务器返回状态码 %d", response.StatusCode)
 	return result
+}
+
+func shouldRetryHealthCheck(result siteHealth) bool {
+	switch result.Error {
+	case "网址格式无效", "私有或保留地址已被保护", "网站证书异常":
+		return false
+	default:
+		return true
+	}
 }
 
 func friendlyCheckError(err error) string {

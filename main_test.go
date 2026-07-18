@@ -138,6 +138,46 @@ func TestHealthChecker(t *testing.T) {
 	}
 }
 
+func TestHealthCheckerRetriesTransientFailures(t *testing.T) {
+	var requests atomic.Int64
+	methods := make(chan string, 3)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		attempt := requests.Add(1)
+		methods <- request.Method
+		if attempt < 3 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	checker := newHealthChecker(true)
+	checker.retryDelays = [2]time.Duration{}
+	result := checker.check(bookmark{ID: "retry", URL: server.URL})
+	if result.Status != "online" || result.HTTPCode != http.StatusNoContent {
+		t.Fatalf("expected transient failures to recover, got %#v", result)
+	}
+	if got := requests.Load(); got != 3 {
+		t.Fatalf("health check made %d requests, want 3", got)
+	}
+	wantMethods := []string{http.MethodHead, http.MethodGet, http.MethodGet}
+	for index, want := range wantMethods {
+		if got := <-methods; got != want {
+			t.Fatalf("attempt %d used %s, want %s", index+1, got, want)
+		}
+	}
+}
+
+func TestHealthCheckerDoesNotRetryPermanentFailure(t *testing.T) {
+	checker := newHealthChecker(false)
+	checker.retryDelays = [2]time.Duration{}
+	result := checker.check(bookmark{ID: "blocked", URL: "http://127.0.0.1"})
+	if result.Status != "down" || result.Error != "私有或保留地址已被保护" {
+		t.Fatalf("expected permanent failure without retry, got %#v", result)
+	}
+}
+
 func TestSecurityHeadersAllowLocalImagePreview(t *testing.T) {
 	handler := securityHeaders(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
