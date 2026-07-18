@@ -45,9 +45,9 @@ http://你的VPS地址:5856
 常用管理命令：
 
 ```bash
-systemctl status lightmarks
-journalctl -u lightmarks -f
-systemctl restart lightmarks
+systemctl status lightmarks       # 查看 Lightmarks 的运行状态
+journalctl -u lightmarks -f       # 实时查看运行日志，按 Ctrl+C 退出
+systemctl restart lightmarks      # 重启 Lightmarks 服务
 ```
 
 重新执行一键安装命令即可更新程序，现有配置、密码、背景和书签不会被覆盖。
