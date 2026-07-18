@@ -1,0 +1,8 @@
+.env
+data/
+dist/
+release/
+*.exe
+*.log
+lightmarks
+lightmarks-*

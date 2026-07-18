@@ -1,0 +1,1940 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0bb765">
+  <title>轻签监控台 - 私人书签导航</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #f0f4f8;
+      --ink: #172033;
+      --muted: #8791a3;
+      --line: #dfe5ed;
+      --blue-band: #e9f1fa;
+      --green: #08b866;
+      --green-strong: #069c56;
+      --green-soft: #edfbf3;
+      --red: #ff4f5e;
+      --red-soft: #fff0f1;
+      --orange: #ff9218;
+      --orange-soft: #fff6e7;
+      --blue: #3f7fe8;
+      --blue-soft: #edf4ff;
+	  --glass-color: #ffffff;
+	  --glass-opacity: 76%;
+      --shadow: 0 12px 34px rgba(25, 43, 72, 0.08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page: #15181d;
+      --surface: #20242b;
+      --surface-2: #292e36;
+      --ink: #f0f3f8;
+      --muted: #9ca6b6;
+      --line: #383f4a;
+      --blue-band: #202f42;
+      --green: #27ca7c;
+      --green-strong: #45d992;
+      --green-soft: #18382a;
+      --red: #ff6e79;
+      --red-soft: #43272d;
+      --orange: #ffab45;
+      --orange-soft: #403322;
+      --blue: #6a9bf1;
+      --blue-soft: #243450;
+	  --glass-opacity: 18%;
+      --shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; }
+    body { min-height: 100vh; margin: 0; background: var(--page); color: var(--ink); }
+    button, input, select, textarea { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { color: inherit; }
+    [hidden] { display: none !important; }
+    :focus-visible { outline: 3px solid color-mix(in srgb, var(--green) 35%, transparent); outline-offset: 2px; }
+
+    .button {
+      min-height: 40px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 150ms ease, transform 150ms ease;
+    }
+
+    .button:hover { background: var(--green-strong); }
+    .button:active { transform: translateY(1px); }
+    .button:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; transform: none; }
+    .button:disabled:hover { background: var(--green); }
+    .button.secondary { border-color: var(--line); background: var(--surface); color: var(--ink); }
+    .button.secondary:hover { background: var(--surface-2); }
+    .button.secondary:disabled { border-color: color-mix(in srgb, var(--line) 65%, transparent); background: color-mix(in srgb, var(--surface-2) 54%, transparent); color: var(--muted); }
+    .button.secondary:disabled:hover { background: color-mix(in srgb, var(--surface-2) 54%, transparent); }
+    .button.danger { background: var(--red); }
+    .button.danger:disabled:hover { background: var(--red); }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    input, select { height: 42px; padding: 0 12px; }
+    textarea { min-height: 88px; padding: 10px 12px; resize: vertical; }
+    input:focus, select:focus, textarea:focus { border-color: var(--green); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 14%, transparent); }
+
+    .login-screen { min-height: 100vh; padding: 24px; display: grid; place-items: center; }
+    .login-panel { width: min(100%, 410px); padding: 34px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); }
+    .login-visual { height: 90px; display: flex; align-items: center; justify-content: center; gap: 17px; margin-bottom: 26px; }
+    .mini-monitor { width: 90px; height: 58px; border: 3px solid var(--ink); border-radius: 7px; padding: 7px; position: relative; }
+    .mini-monitor::before { content: ""; position: absolute; left: 50%; bottom: -14px; width: 3px; height: 12px; background: var(--ink); }
+    .mini-monitor::after { content: ""; position: absolute; left: calc(50% - 18px); bottom: -17px; width: 36px; height: 3px; background: var(--ink); }
+    .pulse-line { height: 100%; background: linear-gradient(135deg, transparent 41%, var(--green) 42% 48%, transparent 49%) 0 0 / 26px 26px; opacity: 0.85; }
+    .login-brand { min-width: 0; }
+    .login-brand h1 { margin: 0; max-width: 280px; overflow-wrap: anywhere; font-size: 25px; letter-spacing: 0; }
+    .login-brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: 0.06em; }
+    .login-title { margin: 0 0 6px; font-size: 22px; }
+    .login-copy { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+    .field { display: grid; gap: 7px; }
+    .field + .field { margin-top: 15px; }
+    .field label { color: var(--muted); font-size: 13px; font-weight: 750; }
+    .required-mark { color: var(--red); font-weight: 900; }
+    .field-hint, .field-error { min-height: 17px; margin: 0; font-size: 12px; line-height: 1.4; }
+    .field-hint { color: var(--muted); }
+    .field-error { color: var(--red); }
+    input[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 13%, transparent); }
+    .login-submit { width: 100%; margin-top: 20px; }
+    .login-error { min-height: 20px; margin: 10px 0 0; color: var(--red); font-size: 13px; }
+
+    .app { min-height: 100vh; position: relative; isolation: isolate; background: var(--page); }
+    .app.has-background {
+      background-image: var(--background-image);
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    .app.has-background::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      background: color-mix(in srgb, var(--page) 82%, transparent);
+    }
+	:root.glass-enabled .app.has-background::before { background: color-mix(in srgb, var(--page) 54%, transparent); }
+	:root.glass-enabled .login-panel,
+	:root.glass-enabled .utility-button,
+	:root.glass-enabled .filter-panel,
+	:root.glass-enabled .stats-rail,
+	:root.glass-enabled .group-head,
+	:root.glass-enabled .bookmark-card,
+	:root.glass-enabled .menu-panel,
+	:root.glass-enabled .pager button,
+	:root.glass-enabled dialog {
+	  border-color: color-mix(in srgb, var(--glass-color) 42%, var(--line));
+	  background: color-mix(in srgb, var(--glass-color) var(--glass-opacity), transparent);
+	  -webkit-backdrop-filter: blur(16px) saturate(140%);
+	  backdrop-filter: blur(16px) saturate(140%);
+	}
+    .page-shell { width: min(100%, 1640px); margin: 0 auto; padding: 8px 30px 52px; }
+
+    .masthead {
+      min-height: 118px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 30px;
+      position: relative;
+    }
+
+    .mast-brand { grid-column: 2; display: flex; align-items: center; gap: 22px; }
+    .monitor-art { width: 150px; height: 90px; position: relative; }
+    .monitor-screen { position: absolute; width: 70px; height: 52px; top: 5px; border: 3px solid #3c4658; border-radius: 6px; background: var(--surface); overflow: hidden; }
+    .monitor-screen.first { left: 2px; transform: rotate(-3deg); }
+    .monitor-screen.second { right: 3px; transform: rotate(3deg); }
+    .monitor-screen::before { content: ""; position: absolute; left: 7px; right: 7px; bottom: 7px; height: 1px; background: color-mix(in srgb, var(--green) 45%, transparent); }
+    .monitor-screen::after { content: ""; position: absolute; left: 50%; bottom: -14px; width: 3px; height: 12px; background: #3c4658; }
+    .desk-line { position: absolute; left: 0; right: 0; bottom: 16px; height: 3px; background: #3c4658; transform: rotate(-1deg); }
+    .status-spark { position: absolute; left: 53px; top: 0; width: 44px; height: 24px; border-top: 3px solid var(--red); transform: rotate(12deg); }
+    .monitor-display { position: absolute; inset: 5px 3px 7px; display: grid; place-content: center; gap: 1px; color: var(--ink); text-align: center; font-variant-numeric: tabular-nums; }
+    .monitor-value { font-size: 14px; line-height: 1; font-weight: 950; }
+    .monitor-screen.second .monitor-value { font-size: 12px; }
+    .monitor-caption { color: var(--green-strong); font-size: 7px; line-height: 1.1; font-weight: 850; white-space: nowrap; }
+    .brand-copy { min-width: 0; }
+    .brand-copy h1 { margin: 0; max-width: min(62vw, 720px); overflow-wrap: anywhere; font-size: clamp(31px, 4vw, 46px); line-height: 1.05; letter-spacing: 0; }
+    .brand-copy p { margin: 8px 0 0; color: var(--muted); font-size: 14px; font-weight: 800; letter-spacing: 0.08em; }
+
+    .mast-actions { position: absolute; top: 8px; right: 0; display: flex; gap: 8px; }
+    .utility-button { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 0; display: grid; place-items: center; background: var(--surface); color: var(--muted); font-family: "Segoe UI Symbol", sans-serif; font-size: 23px; line-height: 1; cursor: pointer; box-shadow: 0 5px 16px rgba(24, 39, 67, 0.06); }
+    .utility-button:hover { background: var(--surface-2); color: var(--ink); }
+    .utility-button { position: relative; }
+    .utility-button.has-note::after { content: ""; position: absolute; top: 7px; right: 7px; width: 7px; height: 7px; border: 2px solid var(--surface); border-radius: 50%; background: var(--green); }
+
+    .filter-panel {
+      padding: 18px 22px;
+      border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .filter-label { color: var(--muted); font-size: 13px; font-weight: 800; white-space: nowrap; }
+    .search-input { width: clamp(190px, 24vw, 330px); }
+    .category-select { width: 160px; }
+    .segments { display: inline-flex; align-items: center; gap: 5px; }
+    .segment { height: 40px; border: 1px solid var(--line); border-radius: 7px; padding: 0 14px; background: var(--surface); cursor: pointer; font-weight: 750; white-space: nowrap; }
+    .segment:hover { background: var(--surface-2); }
+    .segment.active { border-color: var(--green); background: var(--green); color: #fff; }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 116px; gap: 18px; align-items: start; margin-top: 28px; }
+    .content-column { min-width: 0; }
+    .notice-stack { display: grid; gap: 10px; margin-bottom: 24px; }
+    .notice { min-height: 68px; border: 1px solid; border-radius: 8px; padding: 13px 18px; display: grid; grid-template-columns: 36px auto minmax(0, 1fr); align-items: center; gap: 12px; }
+    .notice.danger { border-color: color-mix(in srgb, var(--red) 42%, var(--line)); background: var(--red-soft); }
+    .notice.success { border-color: color-mix(in srgb, var(--green) 42%, var(--line)); background: var(--green-soft); }
+    .notice.info { border-color: color-mix(in srgb, var(--orange) 42%, var(--line)); background: var(--orange-soft); }
+    .notice-icon { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-weight: 950; }
+    .danger .notice-icon { background: var(--red); }
+    .success .notice-icon { background: var(--green); }
+    .info .notice-icon { background: var(--orange); }
+    .notice-title { font-size: 14px; font-weight: 900; white-space: nowrap; }
+    .danger .notice-title { color: var(--red); }
+    .success .notice-title { color: var(--green-strong); }
+    .info .notice-title { color: var(--orange); }
+    .notice-content { min-width: 0; color: var(--ink); font-size: 14px; line-height: 1.65; }
+    .notice-tag { display: inline-block; margin: 2px 6px 2px 0; padding: 3px 10px; border-radius: 5px; color: #fff; font-size: 12px; font-weight: 850; line-height: 1.45; text-decoration: none; cursor: pointer; transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
+    .notice-tag:hover { filter: brightness(0.96); box-shadow: 0 3px 8px rgba(24, 39, 67, 0.14); transform: translateY(-1px); }
+    .danger .notice-tag { background: var(--red); }
+    .success .notice-tag { background: var(--green); }
+    .progress-track { width: min(420px, 100%); height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--line) 70%, transparent); overflow: hidden; margin-top: 6px; }
+    .progress-value { height: 100%; background: var(--green); transition: width 250ms ease; }
+
+    .stats-rail { position: sticky; top: 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); padding: 14px 11px; display: grid; gap: 14px; }
+    .stat { min-height: 57px; border-radius: 6px; padding: 7px 5px; display: grid; place-content: center; text-align: center; transition: background 150ms ease, box-shadow 150ms ease; }
+    .stat:hover { background: color-mix(in srgb, var(--surface-2) 58%, transparent); box-shadow: 0 4px 12px rgba(24, 39, 67, 0.055); }
+    .stat-label { display: block; color: var(--muted); font-size: 11px; font-weight: 850; }
+    .stat-value { display: block; margin-top: 3px; color: var(--ink); font-size: 24px; line-height: 1; font-weight: 950; font-variant-numeric: tabular-nums; }
+    .stat.online .stat-value { color: var(--green); }
+    .stat.down .stat-value { color: var(--red); }
+    .stat.unknown .stat-value { color: var(--orange); }
+    .stat + .stat { padding-top: 13px; border-top: 1px solid var(--line); }
+
+    .group-section + .group-section { margin-top: 24px; }
+    .group-head { min-height: 58px; padding: 0 18px; border-radius: 8px; background: var(--blue-band); display: flex; align-items: center; gap: 12px; }
+    .collapse-button { width: 30px; height: 30px; border: 0; border-radius: 5px; background: transparent; cursor: pointer; color: var(--muted); font-size: 19px; }
+    .collapse-button:hover { background: color-mix(in srgb, var(--blue) 10%, transparent); color: var(--ink); }
+    .group-title { margin: 0; font-size: 21px; letter-spacing: 0; }
+    .group-count { color: var(--muted); font-size: 13px; }
+    .group-line { height: 1px; flex: 1; background: color-mix(in srgb, var(--blue) 22%, var(--line)); }
+
+    .bookmark-grid { margin-top: 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 14px; }
+    .bookmark-card { min-width: 0; min-height: 138px; border: 1px solid color-mix(in srgb, var(--line) 76%, transparent); border-left: 5px solid var(--orange); border-radius: 8px; padding: 15px 15px 13px; background: var(--surface); box-shadow: 0 5px 16px rgba(24, 39, 67, 0.06); position: relative; transition: transform 150ms ease, box-shadow 150ms ease; }
+    .bookmark-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .bookmark-card.located { animation: locate-bookmark 1.25s ease; }
+    @keyframes locate-bookmark {
+      0%, 100% { box-shadow: 0 5px 16px rgba(24, 39, 67, 0.06); }
+      28%, 72% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 24%, transparent), var(--shadow); }
+    }
+    .bookmark-card.online { border-left-color: var(--green); }
+    .bookmark-card.down { border-left-color: var(--red); }
+    .bookmark-card.checking { border-left-color: var(--blue); }
+    .card-state { position: absolute; right: 14px; top: 11px; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 900; background: var(--orange-soft); color: var(--orange); }
+    .online .card-state { background: var(--green-soft); color: var(--green-strong); }
+    .down .card-state { background: var(--red-soft); color: var(--red); }
+    .checking .card-state { background: var(--blue-soft); color: var(--blue); }
+    .bookmark-link { min-width: 0; display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 12px; padding: 15px 52px 10px 0; color: inherit; text-decoration: none; }
+    .site-mark { width: 52px; height: 52px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-size: 19px; font-weight: 950; text-transform: uppercase; box-shadow: inset 0 -4px rgba(0, 0, 0, 0.09); }
+	.site-mark { position: relative; overflow: hidden; }
+	.site-mark img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 7px; object-fit: cover; background: var(--surface); }
+    .tone-0 { background: #0a9f72; }
+    .tone-1 { background: #e27c30; }
+    .tone-2 { background: #3978cf; }
+    .tone-3 { background: #8a5ab5; }
+    .tone-4 { background: #59755e; }
+    .tone-5 { background: #c84e62; }
+    .bookmark-title { margin: 0 0 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 900; }
+    .bookmark-host { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
+    .card-bottom { min-height: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+    .health-detail { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--orange); font-size: 12px; font-weight: 800; }
+    .online .health-detail { color: var(--green-strong); }
+    .down .health-detail { color: var(--red); }
+    .checking .health-detail { color: var(--blue); }
+    .card-description { margin: 0 0 10px; color: var(--muted); font-size: 12px; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .card-menu { position: absolute; top: 43px; right: 12px; z-index: 4; }
+    .card-menu summary { list-style: none; }
+    .card-menu summary::-webkit-details-marker { display: none; }
+    .menu-trigger { width: 30px; height: 30px; border: 0; border-radius: 6px; display: grid; place-items: center; background: transparent; color: var(--muted); cursor: pointer; font-size: 18px; }
+    .menu-trigger:hover { background: var(--surface-2); color: var(--ink); }
+    .menu-panel { position: absolute; top: 32px; right: 0; width: 96px; padding: 5px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); box-shadow: var(--shadow); }
+    .menu-panel button { width: 100%; min-height: 34px; border: 0; border-radius: 5px; padding: 0 9px; background: transparent; text-align: left; cursor: pointer; font-size: 13px; }
+    .menu-panel button:hover { background: var(--surface-2); }
+    .menu-panel button[data-action="delete"] { color: var(--red); }
+
+    .empty-state { min-height: 360px; display: grid; place-items: center; text-align: center; color: var(--muted); }
+    .empty-state h2 { margin: 0 0 7px; color: var(--ink); font-size: 21px; }
+    .empty-state p { margin: 0 0 18px; font-size: 14px; }
+    .empty-actions { display: flex; justify-content: center; gap: 8px; }
+    .pager { min-height: 54px; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .pager span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .pager button { min-width: 74px; height: 36px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); cursor: pointer; }
+    .pager button:hover:not(:disabled) { background: var(--surface-2); }
+    .pager button:disabled { opacity: 0.45; cursor: default; }
+
+    dialog { width: min(calc(100% - 28px), 500px); max-height: calc(100vh - 32px); overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 0; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24); }
+    dialog::backdrop { background: rgba(11, 18, 29, 0.58); }
+    .dialog-body { padding: 24px; }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+    .dialog-title { margin: 0; font-size: 20px; letter-spacing: 0; }
+    .close-button { width: 34px; height: 34px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 24px; }
+    .close-button:hover { background: var(--surface-2); color: var(--ink); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+    .danger-copy { margin: 0; color: var(--muted); line-height: 1.6; }
+    .settings-dialog { width: min(calc(100% - 28px), 620px); }
+    .settings-group + .settings-group { margin-top: 25px; }
+    .settings-group-title { margin: 0 0 3px; display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 13px; font-weight: 900; letter-spacing: 0; }
+    .settings-group-title::before { content: ""; width: 3px; height: 14px; border-radius: 2px; background: var(--green); }
+    .settings-section { padding: 15px 0; border-top: 1px solid var(--line); }
+    .settings-group .settings-section:first-of-type { border-top: 0; }
+    .settings-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 18px; }
+    .settings-row + .settings-row { margin-top: 15px; }
+    .settings-copy h3 { margin: 0 0 4px; font-size: 15px; letter-spacing: 0; }
+    .settings-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .settings-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .settings-input { width: 220px; max-width: 100%; }
+    .settings-input.wide { width: 280px; }
+    .settings-footer { position: sticky; bottom: -24px; margin: 20px -24px -24px; padding: 15px 24px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(10px); }
+	.icon-editor { display: flex; align-items: center; gap: 14px; }
+	.icon-preview { flex: 0 0 auto; }
+	.icon-editor-copy { min-width: 0; display: grid; gap: 8px; }
+	.icon-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+	.icon-actions .button { min-height: 36px; padding: 0 11px; }
+	.icon-actions .button.selected { border-color: var(--green); color: var(--green-strong); background: color-mix(in srgb, var(--green) 10%, var(--surface)); }
+	.icon-status { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+	.toggle-control { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; font-weight: 800; color: var(--muted); }
+	.toggle-control input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+	.toggle-track { width: 42px; height: 24px; padding: 3px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); transition: background 150ms ease, border-color 150ms ease; }
+	.toggle-track::after { content: ""; display: block; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: transform 150ms ease, background 150ms ease; }
+	.toggle-control input:checked + .toggle-track { border-color: var(--green); background: color-mix(in srgb, var(--green) 28%, transparent); }
+	.toggle-control input:checked + .toggle-track::after { transform: translateX(18px); background: var(--green); }
+	.toggle-control input:focus-visible + .toggle-track { outline: 3px solid color-mix(in srgb, var(--green) 35%, transparent); outline-offset: 2px; }
+	.color-picker { width: 44px; min-width: 44px; padding: 4px; cursor: pointer; }
+	.color-value { min-width: 62px; color: var(--muted); font-size: 12px; font-weight: 750; text-transform: uppercase; }
+    .appearance-controls { align-items: center; }
+    .background-preview { width: 92px; height: 58px; border: 1px dashed var(--line); border-radius: 7px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); font-size: 11px; overflow: hidden; background-position: center; background-size: cover; }
+    .background-preview.active { border-style: solid; color: transparent; }
+    .combobox { position: relative; }
+    .combobox input { padding-right: 46px; }
+    .combobox-toggle { position: absolute; top: 1px; right: 1px; width: 40px; height: 40px; border: 0; border-left: 1px solid var(--line); border-radius: 0 6px 6px 0; display: grid; place-items: center; background: transparent; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; }
+    .combobox-toggle:hover, .combobox.open .combobox-toggle { background: var(--surface-2); color: var(--ink); }
+    .combobox-list { position: absolute; z-index: 8; top: calc(100% + 5px); left: 0; right: 0; max-height: 178px; overflow-y: auto; padding: 5px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); box-shadow: var(--shadow); }
+    .combobox-option { width: 100%; min-height: 36px; border: 0; border-radius: 5px; padding: 7px 10px; display: block; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+    .combobox-option:hover, .combobox-option:focus-visible { background: var(--surface-2); }
+    .combobox-empty { margin: 0; padding: 8px 10px; color: var(--muted); font-size: 12px; }
+    .note-textarea { min-height: 260px; line-height: 1.65; }
+    .note-meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; }
+    .note-meta output { font-variant-numeric: tabular-nums; }
+    .note-actions { justify-content: space-between; }
+    .note-actions-main { display: flex; gap: 9px; }
+    .toast { position: fixed; z-index: 30; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: min(calc(100% - 32px), 520px); border-radius: 7px; padding: 11px 15px; background: #17211f; color: #fff; box-shadow: var(--shadow); font-size: 13px; }
+    .toast.error { background: #9a3038; }
+
+    @media (max-width: 1080px) {
+      .masthead { grid-template-columns: 1fr auto; }
+      .mast-brand { grid-column: 1; }
+      .workspace { grid-template-columns: 1fr; }
+      .stats-rail { position: static; grid-row: 1; grid-template-columns: repeat(5, 1fr); padding: 12px; }
+      .stat + .stat { padding-top: 0; border-top: 0; border-left: 1px solid var(--line); }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell { padding: 6px 14px 36px; }
+      .masthead { min-height: 94px; grid-template-columns: 1fr; align-items: center; }
+      .mast-brand { grid-column: 1; gap: 12px; padding-right: 98px; }
+      .monitor-art { width: 96px; height: 62px; transform: scale(0.72); transform-origin: left center; margin-right: -23px; }
+      .brand-copy h1 { font-size: 27px; }
+      .brand-copy p { font-size: 10px; }
+      .mast-actions { top: 7px; right: 0; }
+      .filter-panel { padding: 14px; gap: 12px; }
+      .filter-group.search-group { width: 100%; }
+      .search-input { width: 100%; }
+      .segments { overflow-x: auto; max-width: 100%; }
+      .notice { grid-template-columns: 32px minmax(0, 1fr); align-items: start; }
+      .notice-content { grid-column: 2; }
+      .stats-rail { grid-template-columns: repeat(5, minmax(72px, 1fr)); overflow-x: auto; }
+      .stat { min-width: 72px; }
+      .bookmark-grid { grid-template-columns: repeat(auto-fill, minmax(225px, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .settings-row { grid-template-columns: 1fr; gap: 10px; }
+      .settings-actions { justify-content: stretch; }
+      .settings-input, .settings-input.wide { width: 100%; }
+      .settings-actions .button { flex: 1; }
+      .appearance-controls { justify-content: flex-start; }
+    }
+
+    @media (max-width: 480px) {
+      .login-panel { padding: 27px 22px; }
+      .monitor-art { display: none; }
+      .masthead { min-height: 84px; }
+      .brand-copy h1 { max-width: 100%; font-size: 25px; }
+      .brand-copy p { max-width: 100%; line-height: 1.45; }
+      .utility-button { width: 40px; height: 40px; }
+      .filter-group { width: 100%; align-items: flex-start; flex-direction: column; }
+      .segments { width: 100%; }
+      .segment { min-width: 0; flex: 1; padding: 0 6px; }
+      .category-select { width: 100%; }
+      .notice { padding: 12px; gap: 9px; }
+      .stats-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; overflow: visible; padding: 8px; }
+      .stat, .stat + .stat { min-width: 0; padding: 9px 4px; border: 0; background: color-mix(in srgb, var(--surface-2) 54%, transparent); }
+      .stat-value { font-size: 22px; }
+      .group-head { padding: 0 12px; }
+      .group-title { font-size: 18px; }
+      .bookmark-grid { grid-template-columns: 1fr; }
+      .empty-actions, .dialog-actions { flex-direction: column; }
+      .dialog-actions .button { width: 100%; }
+	  .settings-dialog, #bookmarkDialog, #noteDialog { width: 100%; height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; border: 0; border-radius: 0; }
+	  .settings-dialog .dialog-body, #bookmarkDialog .dialog-body, #noteDialog .dialog-body { min-height: 100%; padding: 18px; }
+	  .settings-footer { bottom: -18px; margin: 18px -18px -18px; padding: 13px 18px; }
+	  .note-textarea { min-height: clamp(220px, 45dvh, 420px); }
+	  .icon-editor { align-items: flex-start; }
+      .settings-footer .button { width: 100%; }
+      .note-actions, .note-actions-main { flex-direction: column; }
+      .note-actions-main, .note-actions .button { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      .bookmark-card.located { animation: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 24%, transparent), var(--shadow); }
+    }
+  </style>
+</head>
+<body>
+  <section class="login-screen" id="loginView" hidden>
+    <form class="login-panel" id="loginForm">
+      <div class="login-visual">
+        <div class="mini-monitor" aria-hidden="true"><div class="pulse-line"></div></div>
+        <div class="login-brand"><h1 id="loginSiteName">轻签监控台</h1><p>私人书签导航</p></div>
+      </div>
+      <h2 class="login-title">欢迎回来</h2>
+      <p class="login-copy">登录后查看书签和站点可用状态。</p>
+      <div class="field">
+        <label for="password">访问密码</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required autofocus>
+      </div>
+      <button class="button login-submit" type="submit">登录</button>
+      <p class="login-error" id="loginError" role="alert"></p>
+    </form>
+  </section>
+
+  <div class="app" id="appView" hidden>
+    <div class="page-shell">
+      <header class="masthead">
+        <div class="mast-brand">
+          <div class="monitor-art" aria-hidden="true">
+            <div class="status-spark"></div>
+            <div class="monitor-screen first"><div class="monitor-display"><time class="monitor-value" id="monitorTime">--:--</time><span class="monitor-caption" id="monitorZone">上海</span></div></div>
+            <div class="monitor-screen second"><div class="monitor-display"><time class="monitor-value" id="monitorDate">--/--</time><span class="monitor-caption" id="monitorWeek">--</span></div></div>
+            <div class="desk-line"></div>
+          </div>
+          <div class="brand-copy">
+            <h1 id="mastSiteName">轻签监控台</h1>
+            <p id="mastSiteSubtitle">私人书签与网站状态监测</p>
+          </div>
+        </div>
+        <div class="mast-actions">
+          <button class="utility-button" id="noteButton" type="button" aria-label="打开便签" title="便签"><span aria-hidden="true">✎</span></button>
+          <button class="utility-button" id="settingsButton" type="button" aria-label="打开设置" title="设置"><span aria-hidden="true">⚙</span></button>
+        </div>
+      </header>
+
+      <section class="filter-panel" aria-label="书签筛选">
+        <div class="filter-group search-group">
+          <span class="filter-label">搜索</span>
+          <input class="search-input" id="searchInput" type="search" placeholder="站点名称、网址或备注" autocomplete="off">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">状态</span>
+          <div class="segments" id="statusSegments">
+            <button class="segment active" data-status="all" type="button">全部</button>
+            <button class="segment" data-status="online" type="button">健康</button>
+            <button class="segment" data-status="down" type="button">异常</button>
+            <button class="segment" data-status="unknown" type="button">未检测</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label" for="categorySelect">分类</label>
+          <select class="category-select" id="categorySelect"><option value="全部">全部分类</option></select>
+        </div>
+      </section>
+
+      <div class="workspace">
+        <main class="content-column">
+          <section class="notice-stack" id="noticeStack" aria-live="polite"></section>
+          <div id="groupList"></div>
+          <div class="empty-state" id="emptyState" hidden>
+            <div>
+              <h2 id="emptyTitle">还没有书签</h2>
+              <p id="emptyCopy">添加常用网站，或导入浏览器书签。</p>
+              <div class="empty-actions">
+                <button class="button" id="emptySettingsButton" type="button">打开设置</button>
+              </div>
+            </div>
+          </div>
+          <nav class="pager" id="pager" aria-label="书签分页" hidden>
+            <button id="prevPage" type="button">上一页</button>
+            <span id="pagerInfo"></span>
+            <button id="nextPage" type="button">下一页</button>
+          </nav>
+        </main>
+
+        <aside class="stats-rail" aria-label="站点状态统计">
+          <div class="stat"><span class="stat-label">总计</span><strong class="stat-value" id="statTotal">0</strong></div>
+          <div class="stat online"><span class="stat-label">健康</span><strong class="stat-value" id="statOnline">0</strong></div>
+          <div class="stat down"><span class="stat-label">异常</span><strong class="stat-value" id="statDown">0</strong></div>
+          <div class="stat unknown"><span class="stat-label">未检测</span><strong class="stat-value" id="statUnknown">0</strong></div>
+          <div class="stat"><span class="stat-label">分类</span><strong class="stat-value" id="statCategories">0</strong></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="settings-dialog" id="settingsDialog">
+    <div class="dialog-body">
+      <div class="dialog-head">
+        <h2 class="dialog-title">设置</h2>
+        <button class="close-button" data-close-settings type="button" aria-label="关闭" title="关闭">×</button>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">常规设置</h3>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>站点名称</h3><p>同步显示在首页和登录页，最多 24 个字符。</p></div>
+            <div class="settings-actions">
+              <input class="settings-input" id="siteNameInput" type="text" maxlength="24" autocomplete="off" aria-label="站点名称">
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>首页副标题</h3><p>显示在站点名称下方，最多 40 个字符。</p></div>
+            <div class="settings-actions">
+              <input class="settings-input wide" id="siteSubtitleInput" type="text" maxlength="40" autocomplete="off" aria-label="首页副标题">
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>时间地区</h3><p>首页小电视会显示该地区的时间和日期。</p></div>
+            <div class="settings-actions">
+              <select class="settings-input wide" id="timeZoneSelect" aria-label="时间地区">
+                <option value="Asia/Shanghai" data-short="上海">中国大陆（上海）</option>
+                <option value="Asia/Hong_Kong" data-short="香港">中国香港</option>
+                <option value="Asia/Taipei" data-short="台北">中国台湾（台北）</option>
+                <option value="Asia/Tokyo" data-short="东京">日本（东京）</option>
+                <option value="Asia/Singapore" data-short="新加坡">新加坡</option>
+                <option value="Asia/Bangkok" data-short="曼谷">泰国（曼谷）</option>
+                <option value="Asia/Dubai" data-short="迪拜">阿联酋（迪拜）</option>
+                <option value="Europe/London" data-short="伦敦">英国（伦敦）</option>
+                <option value="Europe/Paris" data-short="巴黎">法国（巴黎）</option>
+                <option value="America/New_York" data-short="纽约">美国（纽约）</option>
+                <option value="America/Chicago" data-short="芝加哥">美国（芝加哥）</option>
+                <option value="America/Denver" data-short="丹佛">美国（丹佛）</option>
+                <option value="America/Los_Angeles" data-short="洛杉矶">美国（洛杉矶）</option>
+                <option value="Australia/Sydney" data-short="悉尼">澳大利亚（悉尼）</option>
+                <option value="UTC" data-short="UTC">协调世界时（UTC）</option>
+              </select>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>书签操作</h3><p>添加书签或重新检测全部网站状态。</p></div>
+            <div class="settings-actions">
+              <button class="button secondary" id="settingsAddButton" type="button">添加书签</button>
+              <button class="button" id="checkButton" type="button">检测全部</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">外观与个性化</h3>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>显示模式</h3><p>切换浅色或深色界面。</p></div>
+            <div class="settings-actions"><button class="button secondary" id="themeButton" type="button">切换为深色</button></div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>毛玻璃</h3><p>为主要面板增加半透明模糊效果，可自定义颜色。</p></div>
+            <div class="settings-actions appearance-controls">
+              <label class="toggle-control" title="开启毛玻璃">
+                <input id="glassEnabledInput" type="checkbox">
+                <span class="toggle-track" aria-hidden="true"></span>
+                <span id="glassToggleLabel">已开启</span>
+              </label>
+              <input class="color-picker" id="glassColorInput" type="color" value="#ffffff" aria-label="毛玻璃颜色" title="毛玻璃颜色">
+              <output class="color-value" id="glassColorValue" for="glassColorInput">#FFFFFF</output>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>背景图片</h3><p id="backgroundStatus">使用默认纯色背景。支持 JPG、PNG，最大 2 MiB。</p></div>
+            <div class="settings-actions">
+              <div class="background-preview" id="backgroundPreview">默认背景</div>
+              <button class="button secondary" id="backgroundButton" type="button">更换</button>
+              <button class="button secondary" id="clearBackgroundButton" type="button" disabled>恢复默认</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="settings-group">
+        <h3 class="settings-group-title">数据与安全</h3>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>数据管理</h3><p>导入浏览器书签，或导出 JSON 备份。</p></div>
+            <div class="settings-actions">
+              <button class="button secondary" id="importButton" type="button">导入</button>
+              <button class="button secondary" id="exportButton" type="button">导出</button>
+            </div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>访问密码</h3><p>修改后所有设备都需要使用新密码重新登录。</p></div>
+            <div class="settings-actions"><button class="button secondary" id="changePasswordButton" type="button">修改密码</button></div>
+          </div>
+        </section>
+        <section class="settings-section">
+          <div class="settings-row">
+            <div class="settings-copy"><h3>账户</h3><p>退出当前设备的登录状态。</p></div>
+            <div class="settings-actions"><button class="button danger" id="logoutButton" type="button">退出登录</button></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="settings-footer">
+        <button class="button" id="saveSettingsButton" type="button">保存设置</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="noteDialog">
+    <form class="dialog-body" id="noteForm">
+      <div class="dialog-head">
+        <h2 class="dialog-title">便签</h2>
+        <button class="close-button" data-close-note type="button" aria-label="关闭" title="关闭">×</button>
+      </div>
+      <div class="field">
+        <label for="noteText">内容</label>
+        <textarea class="note-textarea" id="noteText" maxlength="1000" placeholder="记录待办事项或临时信息"></textarea>
+        <div class="note-meta"><span>内容保存在当前 VPS</span><output id="noteCount" for="noteText">0 / 1000</output></div>
+      </div>
+      <div class="dialog-actions note-actions">
+        <button class="button secondary" id="clearNoteButton" type="button">清空</button>
+        <div class="note-actions-main">
+          <button class="button secondary" data-close-note type="button">取消</button>
+          <button class="button" id="saveNoteButton" type="submit">保存便签</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="passwordDialog">
+	<form class="dialog-body" id="passwordForm">
+	  <div class="dialog-head">
+		<h2 class="dialog-title">修改访问密码</h2>
+		<button class="close-button" data-close-password type="button" aria-label="关闭" title="关闭">×</button>
+	  </div>
+	  <div class="field">
+		<label for="currentPassword">当前密码</label>
+		<input id="currentPassword" type="password" autocomplete="current-password" minlength="8" maxlength="128" required>
+	  </div>
+	  <div class="field">
+		<label for="newPassword">新密码</label>
+		<input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+	  </div>
+	  <div class="field">
+		<label for="confirmPassword">确认新密码</label>
+		<input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="128" required>
+	  </div>
+	  <p class="login-error" id="passwordError" role="alert"></p>
+	  <div class="dialog-actions">
+		<button class="button secondary" data-close-password type="button">取消</button>
+		<button class="button" type="submit">保存新密码</button>
+	  </div>
+	</form>
+  </dialog>
+
+  <input id="importFile" type="file" accept=".html,.htm,.json,text/html,application/json" hidden>
+  <input id="backgroundFile" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" hidden>
+
+  <dialog id="bookmarkDialog">
+    <form class="dialog-body" id="bookmarkForm">
+      <div class="dialog-head">
+        <h2 class="dialog-title" id="dialogTitle">添加书签</h2>
+        <button class="close-button" data-close-dialog type="button" aria-label="关闭" title="关闭">×</button>
+      </div>
+      <div class="field"><label for="bookmarkTitle">标题 <span class="required-mark" aria-hidden="true">*</span></label><input id="bookmarkTitle" maxlength="120" required></div>
+      <div class="field">
+        <label for="bookmarkURL">网址 <span class="required-mark" aria-hidden="true">*</span></label>
+        <input id="bookmarkURL" type="text" inputmode="url" maxlength="2048" placeholder="https://example.com" aria-describedby="bookmarkURLError" aria-invalid="false" required>
+        <p class="field-error" id="bookmarkURLError" role="alert" hidden></p>
+      </div>
+	  <div class="field">
+		<label>网站图片</label>
+		<div class="icon-editor">
+		  <div class="site-mark icon-preview tone-0" id="bookmarkIconPreview"><span id="bookmarkIconFallback">?</span><img id="bookmarkIconImage" alt="" hidden></div>
+		  <div class="icon-editor-copy">
+			<div class="icon-actions">
+			  <button class="button secondary" id="iconUploadButton" type="button">导入图片</button>
+			  <button class="button secondary" id="iconDetectButton" type="button">自动检测</button>
+			  <button class="button secondary" id="iconDefaultButton" type="button">使用默认</button>
+			</div>
+			<p class="icon-status" id="bookmarkIconStatus">保存后自动检测网站图片。</p>
+		  </div>
+		</div>
+		<input id="bookmarkIconFile" type="file" accept="image/png,image/jpeg,image/gif,image/x-icon,.png,.jpg,.jpeg,.gif,.ico" hidden>
+	  </div>
+      <div class="field">
+        <label for="bookmarkCategory">分类</label>
+        <div class="combobox" id="categoryCombobox">
+          <input id="bookmarkCategory" type="text" maxlength="40" placeholder="未分类" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="categoryComboboxList">
+          <button class="combobox-toggle" id="categoryComboboxToggle" type="button" aria-label="显示已有分类" title="显示已有分类" aria-expanded="false" aria-controls="categoryComboboxList">⌄</button>
+          <div class="combobox-list" id="categoryComboboxList" role="listbox" hidden></div>
+        </div>
+        <p class="field-hint">可选择已有分类，也可直接输入新分类。</p>
+      </div>
+      <div class="field"><label for="bookmarkDescription">备注</label><textarea id="bookmarkDescription" maxlength="300"></textarea></div>
+      <div class="dialog-actions"><button class="button secondary" data-close-dialog type="button">取消</button><button class="button" id="saveButton" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="deleteDialog">
+    <div class="dialog-body">
+      <div class="dialog-head"><h2 class="dialog-title">删除书签</h2><button class="close-button" data-close-delete type="button" aria-label="关闭" title="关闭">×</button></div>
+      <p class="danger-copy" id="deleteCopy">确定删除这个书签吗？此操作无法撤销。</p>
+      <div class="dialog-actions"><button class="button secondary" data-close-delete type="button">取消</button><button class="button danger" id="confirmDelete" type="button">删除</button></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const PAGE_SIZE = 96;
+      const MAX_IMPORT_BYTES = 1024 * 1024;
+	  const MAX_ICON_BYTES = 256 * 1024;
+      const state = {
+		siteName: "轻签监控台",
+		siteSubtitle: "私人书签与网站状态监测",
+		timeZone: "Asia/Shanghai",
+		note: "",
+		glassEnabled: true,
+		glassColor: "#ffffff",
+        bookmarks: [],
+        health: {},
+        healthRunning: false,
+        healthTotal: 0,
+        healthCompleted: 0,
+        allowPrivate: false,
+        statusFilter: "all",
+        category: "全部",
+        query: "",
+        page: 1,
+        limit: 2000,
+        hasBackground: false,
+        backgroundUpdatedAt: "",
+        editingId: null,
+        deletingId: null,
+        collapsed: new Set()
+      };
+
+      const $ = (selector) => document.querySelector(selector);
+      const elements = {
+        loginView: $("#loginView"), appView: $("#appView"), loginForm: $("#loginForm"), loginError: $("#loginError"), password: $("#password"),
+		loginSiteName: $("#loginSiteName"), mastSiteName: $("#mastSiteName"), mastSiteSubtitle: $("#mastSiteSubtitle"), siteNameInput: $("#siteNameInput"), siteSubtitleInput: $("#siteSubtitleInput"), timeZoneSelect: $("#timeZoneSelect"), saveSettingsButton: $("#saveSettingsButton"),
+		monitorTime: $("#monitorTime"), monitorDate: $("#monitorDate"), monitorWeek: $("#monitorWeek"), monitorZone: $("#monitorZone"),
+		glassEnabledInput: $("#glassEnabledInput"), glassToggleLabel: $("#glassToggleLabel"), glassColorInput: $("#glassColorInput"), glassColorValue: $("#glassColorValue"),
+        searchInput: $("#searchInput"), statusSegments: $("#statusSegments"), categorySelect: $("#categorySelect"), checkButton: $("#checkButton"),
+        noticeStack: $("#noticeStack"), groupList: $("#groupList"), emptyState: $("#emptyState"), emptyTitle: $("#emptyTitle"), emptyCopy: $("#emptyCopy"),
+        pager: $("#pager"), pagerInfo: $("#pagerInfo"), prevPage: $("#prevPage"), nextPage: $("#nextPage"), importFile: $("#importFile"), themeButton: $("#themeButton"),
+        statTotal: $("#statTotal"), statOnline: $("#statOnline"), statDown: $("#statDown"), statUnknown: $("#statUnknown"), statCategories: $("#statCategories"),
+        settingsDialog: $("#settingsDialog"), settingsButton: $("#settingsButton"), settingsAddButton: $("#settingsAddButton"),
+		noteDialog: $("#noteDialog"), noteForm: $("#noteForm"), noteButton: $("#noteButton"), noteText: $("#noteText"), noteCount: $("#noteCount"), clearNoteButton: $("#clearNoteButton"), saveNoteButton: $("#saveNoteButton"),
+		passwordDialog: $("#passwordDialog"), passwordForm: $("#passwordForm"), changePasswordButton: $("#changePasswordButton"), currentPassword: $("#currentPassword"), newPassword: $("#newPassword"), confirmPassword: $("#confirmPassword"), passwordError: $("#passwordError"),
+        backgroundFile: $("#backgroundFile"), backgroundButton: $("#backgroundButton"), clearBackgroundButton: $("#clearBackgroundButton"), backgroundStatus: $("#backgroundStatus"), backgroundPreview: $("#backgroundPreview"),
+        bookmarkDialog: $("#bookmarkDialog"), bookmarkForm: $("#bookmarkForm"), dialogTitle: $("#dialogTitle"), bookmarkTitle: $("#bookmarkTitle"), bookmarkURL: $("#bookmarkURL"),
+		bookmarkIconPreview: $("#bookmarkIconPreview"), bookmarkIconFallback: $("#bookmarkIconFallback"), bookmarkIconImage: $("#bookmarkIconImage"), bookmarkIconStatus: $("#bookmarkIconStatus"), bookmarkIconFile: $("#bookmarkIconFile"), iconUploadButton: $("#iconUploadButton"), iconDetectButton: $("#iconDetectButton"), iconDefaultButton: $("#iconDefaultButton"),
+        bookmarkCategory: $("#bookmarkCategory"), bookmarkDescription: $("#bookmarkDescription"), categoryCombobox: $("#categoryCombobox"), categoryComboboxToggle: $("#categoryComboboxToggle"), categoryComboboxList: $("#categoryComboboxList"), bookmarkURLError: $("#bookmarkURLError"), saveButton: $("#saveButton"),
+        deleteDialog: $("#deleteDialog"), deleteCopy: $("#deleteCopy"), confirmDelete: $("#confirmDelete"), toast: $("#toast")
+      };
+
+      let searchTimer = 0;
+      let toastTimer = 0;
+      let healthPollTimer = 0;
+	  let clockTimer = 0;
+	  let pendingIconMode = "keep";
+	  let pendingIconFile = null;
+	  let pendingIconURL = "";
+	  let settingsDirty = false;
+
+      async function api(path, options = {}) {
+        const requestOptions = { credentials: "same-origin", ...options };
+        const binaryBody = requestOptions.body instanceof Blob || requestOptions.body instanceof ArrayBuffer;
+        if (requestOptions.body && typeof requestOptions.body !== "string" && !binaryBody) {
+          requestOptions.headers = { "Content-Type": "application/json", ...(requestOptions.headers || {}) };
+          requestOptions.body = JSON.stringify(requestOptions.body);
+        }
+        const response = await fetch(path, requestOptions);
+        const type = response.headers.get("content-type") || "";
+        const payload = type.includes("application/json") ? await response.json() : null;
+        if (!response.ok) {
+          if (response.status === 401 && path !== "/api/login") showLogin();
+          throw new Error(payload?.error || `请求失败（${response.status}）`);
+        }
+        return payload;
+      }
+
+      function showLogin() {
+        clearTimeout(healthPollTimer);
+		applyNote("");
+        elements.appView.hidden = true;
+        elements.loginView.hidden = false;
+        setTimeout(() => elements.password.focus(), 0);
+      }
+
+      function showApp() {
+        elements.loginView.hidden = true;
+        elements.appView.hidden = false;
+      }
+
+      async function boot() {
+        applyTheme(localStorage.getItem("lightmarks-theme") || "light");
+        try {
+		  await loadSettings(false);
+          const session = await api("/api/session");
+          if (!session.authenticated) return showLogin();
+          showApp();
+          await loadBookmarks();
+		  await loadSettings(true);
+		  await loadNote();
+          await loadHealth(true);
+        } catch {
+          showLogin();
+          elements.loginError.textContent = "服务暂时不可用，请稍后刷新。";
+        }
+      }
+
+      async function loadBookmarks() {
+        const result = await api("/api/bookmarks");
+        state.bookmarks = Array.isArray(result.bookmarks) ? result.bookmarks : [];
+        state.limit = result.limit || 2000;
+        state.page = 1;
+        renderCategoryOptions();
+        renderAll();
+      }
+
+      async function loadSettings(includeBackground = true) {
+        const settings = await api("/api/settings");
+		applySettings(settings, includeBackground);
+      }
+
+	  function applySettings(settings, includeBackground = true) {
+		applySiteName(settings.siteName);
+		applySiteSubtitle(settings.siteSubtitle);
+		applyTimeZone(settings.timeZone);
+		applyGlass(settings);
+		if (includeBackground) applyBackground(settings);
+	  }
+
+	  function applySiteName(value) {
+		const name = String(value || "轻签监控台").trim() || "轻签监控台";
+		state.siteName = name;
+		elements.loginSiteName.textContent = name;
+		elements.mastSiteName.textContent = name;
+		elements.siteNameInput.value = name;
+		document.title = `${name} - 私人书签导航`;
+	  }
+
+	  function applySiteSubtitle(value) {
+		const subtitle = String(value ?? "私人书签与网站状态监测").trim();
+		state.siteSubtitle = subtitle;
+		elements.mastSiteSubtitle.textContent = subtitle;
+		elements.mastSiteSubtitle.hidden = !subtitle;
+		elements.siteSubtitleInput.value = subtitle;
+	  }
+
+	  function applyTimeZone(value) {
+		const zone = [...elements.timeZoneSelect.options].some((option) => option.value === value) ? value : "Asia/Shanghai";
+		state.timeZone = zone;
+		elements.timeZoneSelect.value = zone;
+		renderClock(zone);
+		if (!clockTimer) clockTimer = setInterval(() => renderClock(elements.settingsDialog.open ? elements.timeZoneSelect.value : state.timeZone), 30000);
+	  }
+
+	  function renderClock(timeZone = state.timeZone) {
+		try {
+		  const now = new Date();
+		  const time = new Intl.DateTimeFormat("zh-CN", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(now);
+		  const dateParts = new Intl.DateTimeFormat("zh-CN", { timeZone, month: "2-digit", day: "2-digit" }).formatToParts(now);
+		  const month = dateParts.find((part) => part.type === "month")?.value || "--";
+		  const day = dateParts.find((part) => part.type === "day")?.value || "--";
+		  elements.monitorTime.textContent = time;
+		  elements.monitorTime.dateTime = now.toISOString();
+		  elements.monitorDate.textContent = `${month}/${day}`;
+		  elements.monitorDate.dateTime = now.toISOString().slice(0, 10);
+		  elements.monitorWeek.textContent = new Intl.DateTimeFormat("zh-CN", { timeZone, weekday: "short" }).format(now);
+		  elements.monitorZone.textContent = elements.timeZoneSelect.selectedOptions[0]?.dataset.short || "当地";
+		} catch {
+		  elements.monitorTime.textContent = "--:--";
+		  elements.monitorDate.textContent = "--/--";
+		}
+	  }
+
+	  async function loadNote() {
+		const result = await api("/api/note");
+		applyNote(result.note);
+	  }
+
+	  function applyNote(value) {
+		state.note = String(value || "");
+		elements.noteButton.classList.toggle("has-note", Boolean(state.note.trim()));
+		elements.noteButton.title = state.note.trim() ? "便签（有内容）" : "便签";
+	  }
+
+	  function updateNoteCount() {
+		elements.noteCount.value = `${[...elements.noteText.value].length} / 1000`;
+	  }
+
+	  function openNote() {
+		elements.noteText.value = state.note;
+		updateNoteCount();
+		elements.noteDialog.showModal();
+		setTimeout(() => elements.noteText.focus(), 0);
+	  }
+
+	  async function saveNote(event) {
+		event.preventDefault();
+		elements.saveNoteButton.disabled = true;
+		try {
+		  const result = await api("/api/note", { method: "PUT", body: { note: elements.noteText.value } });
+		  applyNote(result.note);
+		  elements.noteDialog.close();
+		  toast("便签已保存");
+		} catch (error) {
+		  toast(error.message, true);
+		} finally {
+		  elements.saveNoteButton.disabled = false;
+		}
+	  }
+
+	  async function saveSettings() {
+		const name = elements.siteNameInput.value.trim();
+		if (!name) {
+		  toast("请输入站点名称", true);
+		  elements.siteNameInput.focus();
+		  return;
+		}
+		elements.saveSettingsButton.disabled = true;
+		try {
+		  const settings = await api("/api/settings", {
+			method: "PUT",
+			body: {
+			  siteName: name,
+			  siteSubtitle: elements.siteSubtitleInput.value.trim(),
+			  timeZone: elements.timeZoneSelect.value,
+			  glassEnabled: elements.glassEnabledInput.checked,
+			  glassColor: elements.glassColorInput.value
+			}
+		  });
+		  applySettings(settings, false);
+		  settingsDirty = false;
+		  toast("设置已保存");
+		} catch (error) {
+		  applySiteName(state.siteName);
+		  applySiteSubtitle(state.siteSubtitle);
+		  applyTimeZone(state.timeZone);
+		  applyGlass(state);
+		  toast(error.message, true);
+		} finally {
+		  elements.saveSettingsButton.disabled = false;
+		}
+	  }
+
+	  function applyGlass(settings) {
+		const enabled = settings.glassEnabled !== false;
+		const color = /^#[0-9a-f]{6}$/i.test(settings.glassColor || "") ? settings.glassColor.toLowerCase() : "#ffffff";
+		state.glassEnabled = enabled;
+		state.glassColor = color;
+		document.documentElement.classList.toggle("glass-enabled", enabled);
+		document.documentElement.style.setProperty("--glass-color", color);
+		elements.glassEnabledInput.checked = enabled;
+		elements.glassToggleLabel.textContent = enabled ? "已开启" : "已关闭";
+		elements.glassColorInput.value = color;
+		elements.glassColorValue.value = color.toUpperCase();
+	  }
+
+	  function openPasswordDialog() {
+		elements.settingsDialog.close();
+		elements.passwordForm.reset();
+		elements.passwordError.textContent = "";
+		elements.passwordDialog.showModal();
+		setTimeout(() => elements.currentPassword.focus(), 0);
+	  }
+
+	  async function changePassword(event) {
+		event.preventDefault();
+		elements.passwordError.textContent = "";
+		if (elements.newPassword.value !== elements.confirmPassword.value) {
+		  elements.passwordError.textContent = "两次输入的新密码不一致";
+		  elements.confirmPassword.focus();
+		  return;
+		}
+		const submit = elements.passwordForm.querySelector("button[type=submit]");
+		submit.disabled = true;
+		try {
+		  await api("/api/password", {
+			method: "POST",
+			body: { currentPassword: elements.currentPassword.value, newPassword: elements.newPassword.value }
+		  });
+		  elements.passwordForm.reset();
+		  elements.passwordDialog.close();
+		  showLogin();
+		  elements.loginError.textContent = "密码已更新，请使用新密码登录。";
+		} catch (error) {
+		  elements.passwordError.textContent = error.message;
+		} finally {
+		  submit.disabled = false;
+		}
+	  }
+
+      function applyBackground(settings) {
+        state.hasBackground = Boolean(settings.hasBackground);
+        state.backgroundUpdatedAt = settings.backgroundUpdatedAt || "";
+        elements.appView.classList.toggle("has-background", state.hasBackground);
+        elements.clearBackgroundButton.disabled = !state.hasBackground;
+        if (state.hasBackground) {
+          const imageURL = `/api/background?v=${encodeURIComponent(state.backgroundUpdatedAt || Date.now())}`;
+          const cssImage = `url("${imageURL}")`;
+          elements.appView.style.setProperty("--background-image", cssImage);
+          elements.backgroundPreview.style.backgroundImage = cssImage;
+          elements.backgroundPreview.classList.add("active");
+          elements.backgroundPreview.textContent = "";
+          elements.backgroundStatus.textContent = "当前使用 VPS 中保存的自定义背景。支持 JPG、PNG，最大 2 MiB。";
+        } else {
+          elements.appView.style.removeProperty("--background-image");
+          elements.backgroundPreview.style.backgroundImage = "";
+          elements.backgroundPreview.classList.remove("active");
+          elements.backgroundPreview.textContent = "默认背景";
+          elements.backgroundStatus.textContent = "使用默认纯色背景。支持 JPG、PNG，最大 2 MiB。";
+        }
+      }
+
+      async function uploadBackground(file) {
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+          elements.backgroundFile.value = "";
+          toast("背景图片不能超过 2 MiB", true);
+          return;
+        }
+        if (!["image/jpeg", "image/png"].includes(file.type)) {
+          elements.backgroundFile.value = "";
+          toast("背景图片仅支持 JPG 或 PNG", true);
+          return;
+        }
+        elements.backgroundButton.disabled = true;
+        try {
+          const settings = await api("/api/background", { method: "POST", headers: { "Content-Type": file.type }, body: file });
+		  applyBackground(settings);
+          toast("背景图片已更新");
+        } catch (error) {
+          toast(error.message, true);
+        } finally {
+          elements.backgroundButton.disabled = false;
+          elements.backgroundFile.value = "";
+        }
+      }
+
+      async function clearBackground() {
+        elements.clearBackgroundButton.disabled = true;
+        try {
+          const settings = await api("/api/background", { method: "DELETE" });
+		  applyBackground(settings);
+          toast("已恢复默认背景");
+        } catch (error) {
+          toast(error.message, true);
+          elements.clearBackgroundButton.disabled = !state.hasBackground;
+        }
+      }
+
+      async function loadHealth(autoStart = false) {
+        const snapshot = await api("/api/health");
+        const wasRunning = state.healthRunning;
+        state.health = snapshot.results || {};
+        state.healthRunning = Boolean(snapshot.running);
+        state.healthTotal = snapshot.total || 0;
+        state.healthCompleted = snapshot.completed || 0;
+        state.allowPrivate = Boolean(snapshot.allowPrivate);
+        renderAll();
+        if (state.healthRunning) {
+          scheduleHealthPoll();
+        } else if (wasRunning) {
+          toast("网站检测已完成");
+        } else if (autoStart && state.bookmarks.length && Object.keys(state.health).length === 0) {
+          await startHealthCheck(false);
+        }
+      }
+
+      function scheduleHealthPoll() {
+        clearTimeout(healthPollTimer);
+        healthPollTimer = setTimeout(() => loadHealth(false).catch((error) => toast(error.message, true)), 900);
+      }
+
+      async function startHealthCheck(showMessage = true) {
+        if (!state.bookmarks.length || state.healthRunning) return;
+        try {
+          const result = await api("/api/health/check", { method: "POST" });
+          state.healthRunning = Boolean(result.running);
+          state.healthTotal = result.total || state.bookmarks.length;
+          state.healthCompleted = result.completed || 0;
+          renderAll();
+          if (showMessage) toast("已开始检测全部网站");
+          scheduleHealthPoll();
+        } catch (error) {
+          toast(error.message, true);
+        }
+      }
+
+      function resultFor(id) { return state.health[id] || null; }
+      function statusFor(id) {
+        const result = resultFor(id);
+        if (result) return result.status === "online" ? "online" : "down";
+        return state.healthRunning ? "checking" : "unknown";
+      }
+
+      function counts() {
+        const summary = { total: state.bookmarks.length, online: 0, down: 0, unknown: 0 };
+        for (const item of state.bookmarks) {
+          const status = statusFor(item.id);
+          if (status === "online") summary.online++;
+          else if (status === "down") summary.down++;
+          else summary.unknown++;
+        }
+        return summary;
+      }
+
+      function renderAll() {
+        renderStats();
+        renderNotices();
+        renderGroups();
+        renderCheckButton();
+      }
+
+      function renderStats() {
+        const summary = counts();
+        elements.statTotal.textContent = summary.total;
+        elements.statOnline.textContent = summary.online;
+        elements.statDown.textContent = summary.down;
+        elements.statUnknown.textContent = summary.unknown;
+        elements.statCategories.textContent = new Set(state.bookmarks.map((item) => item.category || "未分类")).size;
+      }
+
+      function renderCheckButton() {
+        elements.checkButton.disabled = state.healthRunning || state.bookmarks.length === 0;
+        elements.checkButton.textContent = state.healthRunning ? `检测中 ${state.healthCompleted}/${state.healthTotal}` : "检测全部";
+      }
+
+      function renderNotices() {
+        const downItems = state.bookmarks.filter((item) => statusFor(item.id) === "down");
+        const summary = counts();
+        const fragment = document.createDocumentFragment();
+
+        if (downItems.length) {
+          const notice = makeNotice("danger", "!", "异常通知", "");
+          const content = notice.querySelector(".notice-content");
+          const intro = document.createTextNode(`检测到 ${downItems.length} 个网站异常： `);
+          content.append(intro);
+          downItems.slice(0, 10).forEach((item) => {
+            const tag = document.createElement("a");
+            tag.className = "notice-tag";
+            tag.href = `#bookmark-${item.id}`;
+            tag.textContent = item.title;
+            tag.title = `${resultFor(item.id)?.error || "无法访问"}，点击定位`;
+            tag.setAttribute("aria-label", `定位异常网站：${item.title}`);
+            tag.addEventListener("click", (event) => {
+              event.preventDefault();
+              revealBookmark(item.id);
+            });
+            content.append(tag);
+          });
+          if (downItems.length > 10) content.append(document.createTextNode(` 等 ${downItems.length} 个网站`));
+          fragment.append(notice);
+        }
+
+        if (state.healthRunning) {
+          const notice = makeNotice("success", "✓", "检测进度", `${state.healthCompleted}/${state.healthTotal} 个网站已完成`);
+          const content = notice.querySelector(".notice-content");
+          const track = document.createElement("div");
+          track.className = "progress-track";
+          const value = document.createElement("div");
+          value.className = "progress-value";
+          value.style.width = `${state.healthTotal ? Math.round(state.healthCompleted / state.healthTotal * 100) : 0}%`;
+          track.append(value);
+          content.append(track);
+          fragment.append(notice);
+        } else if (summary.unknown > 0 && state.bookmarks.length) {
+          const privateText = state.allowPrivate ? "已允许检测私有网段。" : "私有网段默认受到保护。";
+          fragment.append(makeNotice("info", "i", "检测提示", `还有 ${summary.unknown} 个网站尚未检测，${privateText}`));
+        } else if (!downItems.length && state.bookmarks.length) {
+          fragment.append(makeNotice("success", "✓", "状态正常", "最近一次检测未发现异常网站。"));
+        }
+
+        elements.noticeStack.replaceChildren(fragment);
+      }
+
+      function makeNotice(type, iconText, titleText, contentText) {
+        const notice = document.createElement("div");
+        notice.className = `notice ${type}`;
+        const icon = document.createElement("span");
+        icon.className = "notice-icon";
+        icon.textContent = iconText;
+        const title = document.createElement("strong");
+        title.className = "notice-title";
+        title.textContent = titleText;
+        const content = document.createElement("div");
+        content.className = "notice-content";
+        content.textContent = contentText;
+        notice.append(icon, title, content);
+        return notice;
+      }
+
+      function filteredBookmarks() {
+        const query = state.query.trim().toLocaleLowerCase("zh-CN");
+        return state.bookmarks.filter((item) => {
+          if (state.category !== "全部" && (item.category || "未分类") !== state.category) return false;
+          const status = statusFor(item.id);
+          if (state.statusFilter === "unknown" && status !== "unknown" && status !== "checking") return false;
+          if (!["all", "unknown"].includes(state.statusFilter) && status !== state.statusFilter) return false;
+          if (!query) return true;
+          return `${item.title} ${item.url} ${item.description || ""} ${item.category || ""}`.toLocaleLowerCase("zh-CN").includes(query);
+        });
+      }
+
+      function revealBookmark(id) {
+        const item = state.bookmarks.find((entry) => entry.id === id);
+        if (!item) return;
+        state.query = "";
+        state.category = "全部";
+        state.statusFilter = "all";
+        state.collapsed.delete(item.category || "未分类");
+        elements.searchInput.value = "";
+        elements.categorySelect.value = "全部";
+        elements.statusSegments.querySelectorAll(".segment").forEach((button) => button.classList.toggle("active", button.dataset.status === "all"));
+        const index = state.bookmarks.findIndex((entry) => entry.id === id);
+        state.page = Math.floor(Math.max(0, index) / PAGE_SIZE) + 1;
+        renderGroups();
+        requestAnimationFrame(() => {
+          const card = document.getElementById(`bookmark-${id}`);
+          if (!card) return;
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
+          card.focus({ preventScroll: true });
+          card.classList.remove("located");
+          requestAnimationFrame(() => card.classList.add("located"));
+          setTimeout(() => card.classList.remove("located"), 1400);
+        });
+      }
+
+      function renderGroups() {
+        const filtered = filteredBookmarks();
+        const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        state.page = Math.min(state.page, pages);
+        const start = (state.page - 1) * PAGE_SIZE;
+        const visible = filtered.slice(start, start + PAGE_SIZE);
+        const grouped = new Map();
+        for (const item of visible) {
+          const category = item.category || "未分类";
+          if (!grouped.has(category)) grouped.set(category, []);
+          grouped.get(category).push(item);
+        }
+        const fragment = document.createDocumentFragment();
+        [...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0], "zh-CN")).forEach(([category, items]) => fragment.append(makeGroup(category, items)));
+        elements.groupList.replaceChildren(fragment);
+
+        const empty = filtered.length === 0;
+        elements.groupList.hidden = empty;
+        elements.emptyState.hidden = !empty;
+        if (empty) {
+          const hasFilters = state.query || state.category !== "全部" || state.statusFilter !== "all";
+          elements.emptyTitle.textContent = hasFilters ? "没有匹配的网站" : "还没有书签";
+          elements.emptyCopy.textContent = hasFilters ? "调整筛选条件后再试。" : "添加常用网站，或导入浏览器书签。";
+        }
+        elements.pager.hidden = empty || pages <= 1;
+        elements.pagerInfo.textContent = `${state.page} / ${pages}`;
+        elements.prevPage.disabled = state.page <= 1;
+        elements.nextPage.disabled = state.page >= pages;
+      }
+
+      function makeGroup(category, items) {
+        const section = document.createElement("section");
+        section.className = "group-section";
+        const head = document.createElement("div");
+        head.className = "group-head";
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "collapse-button";
+        toggle.dataset.collapse = category;
+        toggle.title = state.collapsed.has(category) ? "展开分类" : "收起分类";
+        toggle.setAttribute("aria-label", toggle.title);
+        toggle.textContent = state.collapsed.has(category) ? "›" : "⌄";
+        const title = document.createElement("h2");
+        title.className = "group-title";
+        title.textContent = category;
+        const count = document.createElement("span");
+        count.className = "group-count";
+        count.textContent = `${items.length} 个网站`;
+        const line = document.createElement("span");
+        line.className = "group-line";
+        head.append(toggle, title, count, line);
+        section.append(head);
+        if (!state.collapsed.has(category)) {
+          const grid = document.createElement("div");
+          grid.className = "bookmark-grid";
+          items.forEach((item) => grid.append(makeCard(item)));
+          section.append(grid);
+        }
+        return section;
+      }
+
+      function makeCard(item) {
+        const status = statusFor(item.id);
+        const result = resultFor(item.id);
+        const card = document.createElement("article");
+        card.className = `bookmark-card ${status}`;
+        card.id = `bookmark-${item.id}`;
+        card.tabIndex = -1;
+        const stateLabel = document.createElement("span");
+        stateLabel.className = "card-state";
+        stateLabel.textContent = status === "online" ? "健康" : status === "down" ? "异常" : status === "checking" ? "检测中" : "未检测";
+        card.append(stateLabel);
+
+        const link = document.createElement("a");
+        link.className = "bookmark-link";
+        link.href = item.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        const mark = document.createElement("span");
+        mark.className = `site-mark tone-${toneFor(item.url)}`;
+		const fallback = document.createElement("span");
+		fallback.textContent = initialFor(item.title);
+		mark.append(fallback);
+		if (item.hasIcon) {
+		  const icon = document.createElement("img");
+		  icon.alt = "";
+		  icon.loading = "lazy";
+		  icon.src = `/api/bookmarks/${encodeURIComponent(item.id)}/icon?v=${encodeURIComponent(item.iconVersion || "1")}`;
+		  icon.addEventListener("error", () => icon.remove(), { once: true });
+		  mark.append(icon);
+		}
+        const text = document.createElement("span");
+        const title = document.createElement("h3");
+        title.className = "bookmark-title";
+        title.textContent = item.title;
+        title.title = item.title;
+        const host = document.createElement("p");
+        host.className = "bookmark-host";
+        host.textContent = hostFor(item.url);
+        text.append(title, host);
+        link.append(mark, text);
+        card.append(link);
+
+        if (item.description) {
+          const description = document.createElement("p");
+          description.className = "card-description";
+          description.textContent = item.description;
+          description.title = item.description;
+          card.append(description);
+        }
+        const bottom = document.createElement("div");
+        bottom.className = "card-bottom";
+        const detail = document.createElement("span");
+        detail.className = "health-detail";
+        if (status === "online") detail.textContent = `可访问 · ${result.latencyMs || 0} 毫秒${result.httpCode ? ` · 状态码 ${result.httpCode}` : ""}`;
+        else if (status === "down") detail.textContent = result?.error || "无法访问";
+        else if (status === "checking") detail.textContent = "正在从服务器检测";
+        else detail.textContent = "等待检测";
+        detail.title = detail.textContent;
+        bottom.append(detail);
+        card.append(bottom);
+
+        const details = document.createElement("details");
+        details.className = "card-menu";
+        const summary = document.createElement("summary");
+        summary.className = "menu-trigger";
+        summary.title = "更多操作";
+        summary.setAttribute("aria-label", `管理 ${item.title}`);
+        summary.textContent = "···";
+        const menu = document.createElement("div");
+        menu.className = "menu-panel";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.dataset.action = "edit";
+        edit.dataset.id = item.id;
+        edit.textContent = "编辑";
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.dataset.action = "delete";
+        remove.dataset.id = item.id;
+        remove.textContent = "删除";
+        menu.append(edit, remove);
+        details.append(summary, menu);
+        card.append(details);
+        return card;
+      }
+
+      function initialFor(title) { return [...String(title || "?").trim()][0] || "?"; }
+      function hostFor(value) { try { return new URL(value).hostname.replace(/^www\./, ""); } catch { return value; } }
+      function toneFor(value) { let hash = 0; for (let i = 0; i < value.length; i++) hash = ((hash << 5) - hash + value.charCodeAt(i)) | 0; return Math.abs(hash) % 6; }
+
+      function renderCategoryOptions() {
+        const categories = categoryNames();
+        const options = [makeOption("全部", "全部分类"), ...categories.map((name) => makeOption(name, name))];
+        elements.categorySelect.replaceChildren(...options);
+        elements.categorySelect.value = state.category;
+        renderCategoryComboboxOptions();
+      }
+
+      function makeOption(value, text) { const option = document.createElement("option"); option.value = value; option.textContent = text; return option; }
+
+      function categoryNames() {
+        return [...new Set(state.bookmarks.map((item) => item.category || "未分类"))].sort((a, b) => a.localeCompare(b, "zh-CN"));
+      }
+
+      function renderCategoryComboboxOptions(query = "") {
+        const normalizedQuery = String(query || "").trim().toLocaleLowerCase("zh-CN");
+        const categories = [...new Set(["未分类", ...categoryNames()])].filter((name) => !normalizedQuery || name.toLocaleLowerCase("zh-CN").includes(normalizedQuery));
+        if (!categories.length) {
+          const empty = document.createElement("p");
+          empty.className = "combobox-empty";
+          empty.textContent = "没有匹配分类，保存后将创建新分类";
+          elements.categoryComboboxList.replaceChildren(empty);
+          return;
+        }
+        const options = categories.map((name) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "combobox-option";
+          option.setAttribute("role", "option");
+          option.dataset.category = name;
+          option.textContent = name;
+          return option;
+        });
+        elements.categoryComboboxList.replaceChildren(...options);
+      }
+
+      function setCategoryCombobox(open, query = "") {
+        elements.categoryCombobox.classList.toggle("open", open);
+        elements.categoryComboboxList.hidden = !open;
+        elements.bookmarkCategory.setAttribute("aria-expanded", String(open));
+        elements.categoryComboboxToggle.setAttribute("aria-expanded", String(open));
+        if (open) renderCategoryComboboxOptions(query);
+      }
+
+      function canonicalCategory(value) {
+        const name = String(value || "").trim() || "未分类";
+        return categoryNames().find((existing) => existing.localeCompare(name, "zh-CN", { sensitivity: "base" }) === 0) || name;
+      }
+
+      function openAddDialog() {
+        state.editingId = null;
+        elements.dialogTitle.textContent = "添加书签";
+        elements.bookmarkForm.reset();
+        elements.bookmarkCategory.value = state.category === "全部" ? "未分类" : state.category;
+		clearURLValidation();
+		setCategoryCombobox(false);
+		resetIconEditor(null, "detect");
+        elements.bookmarkDialog.showModal();
+        setTimeout(() => elements.bookmarkTitle.focus(), 0);
+      }
+
+      function openEditDialog(id) {
+        const item = state.bookmarks.find((entry) => entry.id === id);
+        if (!item) return;
+        state.editingId = id;
+        elements.dialogTitle.textContent = "编辑书签";
+        elements.bookmarkTitle.value = item.title;
+        elements.bookmarkURL.value = item.url;
+        elements.bookmarkCategory.value = item.category || "未分类";
+        elements.bookmarkDescription.value = item.description || "";
+		clearURLValidation();
+		setCategoryCombobox(false);
+		resetIconEditor(item, "keep");
+        elements.bookmarkDialog.showModal();
+        setTimeout(() => elements.bookmarkTitle.focus(), 0);
+      }
+
+      function normalizeURL(value) { const trimmed = value.trim(); return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`; }
+
+	  function clearURLValidation() {
+		elements.bookmarkURL.setAttribute("aria-invalid", "false");
+		elements.bookmarkURLError.textContent = "";
+		elements.bookmarkURLError.hidden = true;
+	  }
+
+	  function validateBookmarkURL(showEmpty = false) {
+		const raw = elements.bookmarkURL.value.trim();
+		if (!raw) {
+		  if (showEmpty) {
+			elements.bookmarkURL.setAttribute("aria-invalid", "true");
+			elements.bookmarkURLError.textContent = "请输入网址";
+			elements.bookmarkURLError.hidden = false;
+		  } else clearURLValidation();
+		  return null;
+		}
+		try {
+		  const normalized = normalizeURL(raw);
+		  const parsed = new URL(normalized);
+		  if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname) throw new Error("invalid URL");
+		  clearURLValidation();
+		  return normalized;
+		} catch {
+		  elements.bookmarkURL.setAttribute("aria-invalid", "true");
+		  elements.bookmarkURLError.textContent = "请输入有效网址，例如 https://example.com";
+		  elements.bookmarkURLError.hidden = false;
+		  return null;
+		}
+	  }
+
+	  function resetIconEditor(item, mode) {
+		if (pendingIconURL) URL.revokeObjectURL(pendingIconURL);
+		pendingIconURL = "";
+		pendingIconFile = null;
+		pendingIconMode = mode;
+		elements.bookmarkIconFile.value = "";
+		const title = item?.title || elements.bookmarkTitle.value || "?";
+		const address = item?.url || elements.bookmarkURL.value || "";
+		elements.bookmarkIconPreview.className = `site-mark icon-preview tone-${toneFor(address)}`;
+		elements.bookmarkIconFallback.textContent = initialFor(title);
+		elements.bookmarkIconImage.hidden = true;
+		elements.bookmarkIconImage.removeAttribute("src");
+		if (item?.hasIcon) {
+		  elements.bookmarkIconImage.src = `/api/bookmarks/${encodeURIComponent(item.id)}/icon?v=${encodeURIComponent(item.iconVersion || "1")}`;
+		  elements.bookmarkIconImage.hidden = false;
+		}
+		updateIconEditor(item);
+	  }
+
+	  function updateIconEditor(item = null) {
+		elements.iconUploadButton.classList.toggle("selected", pendingIconMode === "upload");
+		elements.iconDetectButton.classList.toggle("selected", pendingIconMode === "detect");
+		elements.iconDefaultButton.classList.toggle("selected", pendingIconMode === "remove");
+		if (pendingIconMode === "upload") elements.bookmarkIconStatus.textContent = "将使用已选择的本地图片。";
+		else if (pendingIconMode === "detect") elements.bookmarkIconStatus.textContent = "保存后将从网站自动检测图片。";
+		else if (pendingIconMode === "remove") elements.bookmarkIconStatus.textContent = "保存后恢复为字母图标。";
+		else elements.bookmarkIconStatus.textContent = item?.hasIcon ? "当前使用已保存的网站图片。" : "当前使用字母图标。";
+	  }
+
+	  function chooseIconFile(file) {
+		if (!file) return;
+		if (file.size > MAX_ICON_BYTES) {
+		  elements.bookmarkIconFile.value = "";
+		  toast("网站图片不能超过 256 KiB", true);
+		  return;
+		}
+		if (pendingIconURL) URL.revokeObjectURL(pendingIconURL);
+		pendingIconURL = URL.createObjectURL(file);
+		pendingIconFile = file;
+		pendingIconMode = "upload";
+		elements.bookmarkIconImage.src = pendingIconURL;
+		elements.bookmarkIconImage.hidden = false;
+		updateIconEditor();
+	  }
+
+	  async function saveBookmarkIcon(item) {
+		const path = `/api/bookmarks/${encodeURIComponent(item.id)}/icon`;
+		if (pendingIconMode === "upload" && pendingIconFile) {
+		  await api(path, { method: "POST", headers: { "Content-Type": pendingIconFile.type || "application/octet-stream" }, body: pendingIconFile });
+		} else if (pendingIconMode === "detect") {
+		  await api(`${path}/detect`, { method: "POST" });
+		} else if (pendingIconMode === "remove") {
+		  await api(path, { method: "DELETE" });
+		}
+	  }
+
+      async function saveBookmark(event) {
+        event.preventDefault();
+        const normalizedURL = validateBookmarkURL(true);
+        if (!normalizedURL) {
+          elements.bookmarkURL.focus();
+          return;
+        }
+        const input = { title: elements.bookmarkTitle.value.trim(), url: normalizedURL, category: canonicalCategory(elements.bookmarkCategory.value), description: elements.bookmarkDescription.value.trim() };
+        elements.saveButton.disabled = true;
+        try {
+		  let savedItem;
+		  const wasEditing = Boolean(state.editingId);
+          if (state.editingId) {
+			savedItem = await api(`/api/bookmarks/${encodeURIComponent(state.editingId)}`, { method: "PUT", body: input });
+          } else {
+			savedItem = await api("/api/bookmarks", { method: "POST", body: input });
+          }
+		  let iconError = null;
+		  try { await saveBookmarkIcon(savedItem); } catch (error) { iconError = error; }
+          elements.bookmarkDialog.close();
+          await loadBookmarks();
+          await startHealthCheck(false);
+		  if (iconError) toast(`书签已保存，${iconError.message}`, true);
+		  else toast(wasEditing ? "书签已更新" : "书签已添加");
+        } catch (error) { toast(error.message, true); }
+        finally { elements.saveButton.disabled = false; }
+      }
+
+      function openDeleteDialog(id) {
+        const item = state.bookmarks.find((entry) => entry.id === id);
+        if (!item) return;
+        state.deletingId = id;
+        elements.deleteCopy.textContent = `确定删除“${item.title}”吗？此操作无法撤销。`;
+        elements.deleteDialog.showModal();
+      }
+
+      async function deleteBookmark() {
+        if (!state.deletingId) return;
+        elements.confirmDelete.disabled = true;
+        try {
+          await api(`/api/bookmarks/${encodeURIComponent(state.deletingId)}`, { method: "DELETE" });
+          elements.deleteDialog.close();
+          toast("书签已删除");
+          await loadBookmarks();
+          await loadHealth(false);
+        } catch (error) { toast(error.message, true); }
+        finally { state.deletingId = null; elements.confirmDelete.disabled = false; }
+      }
+
+      async function importFile(file) {
+        if (!file) return;
+        if (file.size > MAX_IMPORT_BYTES) return toast("导入文件不能超过 1 MiB", true);
+        try {
+          const text = await file.text();
+          let bookmarks;
+          if (file.name.toLowerCase().endsWith(".json") || file.type.includes("json")) {
+            const parsed = JSON.parse(text);
+            bookmarks = Array.isArray(parsed) ? parsed : parsed.bookmarks;
+          } else {
+            bookmarks = parseBrowserBookmarks(text);
+          }
+          if (!Array.isArray(bookmarks) || !bookmarks.length) throw new Error("文件中没有找到可用书签");
+          bookmarks = bookmarks.slice(0, state.limit).map((item) => ({
+            title: String(item.title || hostFor(item.url || "") || "未命名书签").slice(0, 120),
+            url: String(item.url || "").slice(0, 2048),
+            category: String(item.category || "浏览器导入").slice(0, 40),
+            description: String(item.description || "").slice(0, 300)
+          })).filter((item) => /^https?:\/\//i.test(item.url));
+          const body = { bookmarks, mode: "merge" };
+          if (new Blob([JSON.stringify(body)]).size > MAX_IMPORT_BYTES) throw new Error("整理后的书签仍超过 1 MiB，请分批导入");
+          const result = await api("/api/import", { method: "POST", body });
+          toast(`已导入 ${result.added} 条书签`);
+          await loadBookmarks();
+          await startHealthCheck(false);
+        } catch (error) { toast(error.message || "导入失败", true); }
+        finally { elements.importFile.value = ""; }
+      }
+
+      function parseBrowserBookmarks(markup) {
+        const doc = new DOMParser().parseFromString(markup, "text/html");
+        const result = [];
+        const walk = (node, path = [], depth = 0) => {
+          if (depth > 20 || result.length >= state.limit || !node?.children) return;
+          let pendingFolder = "";
+          for (const child of node.children) {
+            if (result.length >= state.limit) break;
+            const tag = child.tagName.toLowerCase();
+            if (tag === "h3") pendingFolder = child.textContent.trim();
+            else if (tag === "a") {
+              const href = child.getAttribute("href") || "";
+              if (/^https?:\/\//i.test(href)) result.push({ title: child.textContent.trim() || hostFor(href), url: href, category: path[path.length - 1] || "浏览器导入", description: "" });
+            } else if (tag === "dl") {
+              walk(child, pendingFolder ? [...path, pendingFolder] : path, depth + 1);
+              pendingFolder = "";
+            } else {
+              const children = [...child.children];
+              const folder = children.find((entry) => entry.tagName.toLowerCase() === "h3");
+              const list = children.find((entry) => entry.tagName.toLowerCase() === "dl");
+              if (list) walk(list, folder?.textContent.trim() ? [...path, folder.textContent.trim()] : path, depth + 1);
+              else walk(child, path, depth + 1);
+            }
+          }
+        };
+        walk(doc.body);
+        return result;
+      }
+
+      async function exportBookmarks() {
+        try {
+          const response = await fetch("/api/export", { credentials: "same-origin" });
+          if (!response.ok) throw new Error("导出失败，请重新登录后再试");
+          const blob = await response.blob();
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `lightmarks-${new Date().toISOString().slice(0, 10)}.json`;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+          toast("备份已导出");
+        } catch (error) { toast(error.message, true); }
+      }
+
+      function applyTheme(theme) {
+        const next = theme === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = next;
+        elements.themeButton.textContent = next === "dark" ? "切换为浅色" : "切换为深色";
+        localStorage.setItem("lightmarks-theme", next);
+      }
+
+      function toast(message, isError = false) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.className = `toast${isError ? " error" : ""}`;
+        elements.toast.hidden = false;
+        toastTimer = setTimeout(() => { elements.toast.hidden = true; }, 2800);
+      }
+
+      elements.loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        elements.loginError.textContent = "";
+        const submit = elements.loginForm.querySelector("button[type=submit]");
+        submit.disabled = true;
+        try {
+          await api("/api/login", { method: "POST", body: { password: elements.password.value } });
+          elements.password.value = "";
+          showApp();
+          await loadBookmarks();
+		  await loadSettings(true);
+		  await loadNote();
+          await loadHealth(true);
+        } catch (error) { elements.loginError.textContent = error.message; }
+        finally { submit.disabled = false; }
+      });
+
+      elements.searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => { state.query = elements.searchInput.value; state.page = 1; renderGroups(); }, 120);
+      });
+
+      elements.statusSegments.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-status]");
+        if (!button) return;
+        state.statusFilter = button.dataset.status;
+        state.page = 1;
+        elements.statusSegments.querySelectorAll(".segment").forEach((item) => item.classList.toggle("active", item === button));
+        renderGroups();
+      });
+
+      elements.categorySelect.addEventListener("change", () => { state.category = elements.categorySelect.value; state.page = 1; renderGroups(); });
+      elements.groupList.addEventListener("click", (event) => {
+        const collapse = event.target.closest("[data-collapse]");
+        if (collapse) {
+          const category = collapse.dataset.collapse;
+          state.collapsed.has(category) ? state.collapsed.delete(category) : state.collapsed.add(category);
+          renderGroups();
+          return;
+        }
+        const action = event.target.closest("button[data-action]");
+        if (!action) return;
+        const details = action.closest("details");
+        if (details) details.open = false;
+        if (action.dataset.action === "edit") openEditDialog(action.dataset.id);
+        if (action.dataset.action === "delete") openDeleteDialog(action.dataset.id);
+      });
+
+	  function openSettings() {
+		elements.siteNameInput.value = state.siteName;
+		elements.siteSubtitleInput.value = state.siteSubtitle;
+		elements.timeZoneSelect.value = state.timeZone;
+		applyGlass(state);
+		settingsDirty = false;
+		elements.settingsDialog.showModal();
+	  }
+
+	  elements.settingsButton.addEventListener("click", openSettings);
+	  $("#emptySettingsButton").addEventListener("click", openSettings);
+	  elements.saveSettingsButton.addEventListener("click", saveSettings);
+	  elements.siteNameInput.addEventListener("input", () => { settingsDirty = true; });
+	  elements.siteNameInput.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); saveSettings(); } });
+	  elements.siteSubtitleInput.addEventListener("input", () => { settingsDirty = true; });
+	  elements.siteSubtitleInput.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); saveSettings(); } });
+	  elements.timeZoneSelect.addEventListener("change", () => {
+		settingsDirty = true;
+		renderClock(elements.timeZoneSelect.value);
+	  });
+	  elements.glassEnabledInput.addEventListener("change", () => {
+		const enabled = elements.glassEnabledInput.checked;
+		document.documentElement.classList.toggle("glass-enabled", enabled);
+		elements.glassToggleLabel.textContent = enabled ? "已开启" : "已关闭";
+		settingsDirty = true;
+	  });
+	  elements.glassColorInput.addEventListener("input", () => {
+		const color = elements.glassColorInput.value.toLowerCase();
+		document.documentElement.style.setProperty("--glass-color", color);
+		elements.glassColorValue.value = color.toUpperCase();
+		settingsDirty = true;
+	  });
+	  elements.iconUploadButton.addEventListener("click", () => elements.bookmarkIconFile.click());
+	  elements.bookmarkIconFile.addEventListener("change", () => chooseIconFile(elements.bookmarkIconFile.files[0]));
+	  elements.iconDetectButton.addEventListener("click", () => {
+		if (pendingIconURL) URL.revokeObjectURL(pendingIconURL);
+		pendingIconURL = "";
+		pendingIconMode = "detect";
+		pendingIconFile = null;
+		const item = state.bookmarks.find((entry) => entry.id === state.editingId);
+		elements.bookmarkIconImage.hidden = !item?.hasIcon;
+		if (item?.hasIcon) elements.bookmarkIconImage.src = `/api/bookmarks/${encodeURIComponent(item.id)}/icon?v=${encodeURIComponent(item.iconVersion || "1")}`;
+		else elements.bookmarkIconImage.removeAttribute("src");
+		updateIconEditor(item);
+	  });
+	  elements.iconDefaultButton.addEventListener("click", () => {
+		if (pendingIconURL) URL.revokeObjectURL(pendingIconURL);
+		pendingIconURL = "";
+		pendingIconMode = "remove";
+		pendingIconFile = null;
+		elements.bookmarkIconImage.hidden = true;
+		elements.bookmarkIconImage.removeAttribute("src");
+		updateIconEditor();
+	  });
+	  elements.bookmarkTitle.addEventListener("input", () => { elements.bookmarkIconFallback.textContent = initialFor(elements.bookmarkTitle.value); });
+	  elements.bookmarkURL.addEventListener("input", () => {
+		elements.bookmarkIconPreview.className = `site-mark icon-preview tone-${toneFor(elements.bookmarkURL.value)}`;
+		validateBookmarkURL(false);
+	  });
+	  elements.bookmarkURL.addEventListener("blur", () => { if (elements.bookmarkURL.value.trim()) validateBookmarkURL(true); });
+	  elements.bookmarkURL.addEventListener("invalid", () => validateBookmarkURL(true));
+	  elements.bookmarkCategory.addEventListener("focus", () => setCategoryCombobox(true));
+	  elements.bookmarkCategory.addEventListener("input", () => {
+		setCategoryCombobox(true, elements.bookmarkCategory.value);
+	  });
+	  elements.bookmarkCategory.addEventListener("keydown", (event) => {
+		if (event.key === "Escape") setCategoryCombobox(false);
+		if (event.key === "ArrowDown") {
+		  event.preventDefault();
+		  setCategoryCombobox(true);
+		  elements.categoryComboboxList.querySelector(".combobox-option")?.focus();
+		}
+	  });
+	  elements.categoryComboboxToggle.addEventListener("click", () => {
+		const nextOpen = elements.categoryComboboxList.hidden;
+		setCategoryCombobox(nextOpen);
+		if (nextOpen) elements.bookmarkCategory.focus();
+	  });
+	  elements.categoryComboboxList.addEventListener("click", (event) => {
+		const option = event.target.closest("[data-category]");
+		if (!option) return;
+		elements.bookmarkCategory.value = option.dataset.category;
+		elements.bookmarkCategory.focus();
+		setCategoryCombobox(false);
+	  });
+	  elements.categoryComboboxList.addEventListener("keydown", (event) => {
+		const options = [...elements.categoryComboboxList.querySelectorAll(".combobox-option")];
+		const index = options.indexOf(document.activeElement);
+		if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+		  event.preventDefault();
+		  const offset = event.key === "ArrowDown" ? 1 : -1;
+		  options[(index + offset + options.length) % options.length]?.focus();
+		}
+		if (event.key === "Escape") {
+		  elements.bookmarkCategory.focus();
+		  setCategoryCombobox(false);
+		}
+	  });
+	  elements.changePasswordButton.addEventListener("click", openPasswordDialog);
+	  elements.noteButton.addEventListener("click", openNote);
+	  elements.noteForm.addEventListener("submit", saveNote);
+	  elements.noteText.addEventListener("input", updateNoteCount);
+	  elements.clearNoteButton.addEventListener("click", () => {
+		elements.noteText.value = "";
+		updateNoteCount();
+		elements.noteText.focus();
+	  });
+	  elements.passwordForm.addEventListener("submit", changePassword);
+	  elements.passwordDialog.addEventListener("close", () => {
+		elements.passwordForm.reset();
+		elements.passwordError.textContent = "";
+	  });
+      elements.settingsAddButton.addEventListener("click", () => { elements.settingsDialog.close(); openAddDialog(); });
+      $("#checkButton").addEventListener("click", () => { elements.settingsDialog.close(); startHealthCheck(true); });
+      $("#importButton").addEventListener("click", () => { elements.settingsDialog.close(); elements.importFile.click(); });
+      elements.importFile.addEventListener("change", () => importFile(elements.importFile.files[0]));
+      $("#exportButton").addEventListener("click", exportBookmarks);
+      elements.backgroundButton.addEventListener("click", () => elements.backgroundFile.click());
+      elements.backgroundFile.addEventListener("change", () => uploadBackground(elements.backgroundFile.files[0]));
+      elements.clearBackgroundButton.addEventListener("click", clearBackground);
+      elements.bookmarkForm.addEventListener("submit", saveBookmark);
+      elements.confirmDelete.addEventListener("click", deleteBookmark);
+      elements.prevPage.addEventListener("click", () => { state.page--; renderGroups(); window.scrollTo({ top: 180, behavior: "smooth" }); });
+      elements.nextPage.addEventListener("click", () => { state.page++; renderGroups(); window.scrollTo({ top: 180, behavior: "smooth" }); });
+      elements.themeButton.addEventListener("click", () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+	  $("#logoutButton").addEventListener("click", async () => { await api("/api/logout", { method: "POST" }); elements.settingsDialog.close(); showLogin(); });
+      document.querySelectorAll("[data-close-settings]").forEach((button) => button.addEventListener("click", () => elements.settingsDialog.close()));
+	  elements.settingsDialog.addEventListener("click", (event) => {
+		if (event.target !== elements.settingsDialog) return;
+		const rect = elements.settingsDialog.getBoundingClientRect();
+		const inside = event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+		if (!inside) elements.settingsDialog.close();
+	  });
+	  elements.settingsDialog.addEventListener("close", () => {
+		if (settingsDirty) {
+		  applySiteName(state.siteName);
+		  applySiteSubtitle(state.siteSubtitle);
+		  applyTimeZone(state.timeZone);
+		  applyGlass(state);
+		}
+		settingsDirty = false;
+	  });
+	  document.querySelectorAll("[data-close-password]").forEach((button) => button.addEventListener("click", () => elements.passwordDialog.close()));
+	  document.querySelectorAll("[data-close-note]").forEach((button) => button.addEventListener("click", () => elements.noteDialog.close()));
+      document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => elements.bookmarkDialog.close()));
+	  elements.bookmarkDialog.addEventListener("close", () => {
+		if (pendingIconURL) URL.revokeObjectURL(pendingIconURL);
+		pendingIconURL = "";
+		pendingIconFile = null;
+		setCategoryCombobox(false);
+		clearURLValidation();
+	  });
+      document.querySelectorAll("[data-close-delete]").forEach((button) => button.addEventListener("click", () => elements.deleteDialog.close()));
+	  document.addEventListener("pointerdown", (event) => { if (!event.target.closest("#categoryCombobox")) setCategoryCombobox(false); });
+      document.addEventListener("keydown", (event) => { if (event.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) { event.preventDefault(); elements.searchInput.focus(); } });
+
+      boot();
+    })();
+  </script>
+</body>
+</html>

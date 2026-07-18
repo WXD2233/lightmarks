@@ -1,0 +1,26 @@
+services:
+  lightmarks:
+    build: .
+    container_name: lightmarks
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: "5856"
+      DATA_FILE: /data/bookmarks.json
+      MEMORY_LIMIT_MB: "48"
+      ALLOW_PRIVATE_TARGETS: "false"
+    ports:
+      - "127.0.0.1:5856:5856"
+    volumes:
+      - lightmarks-data:/data
+    mem_limit: 64m
+    pids_limit: 64
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  lightmarks-data:
