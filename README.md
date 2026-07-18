@@ -18,6 +18,10 @@
 - 可在设置中修改访问密码，密码加盐哈希后保存并自动注销旧会话
 - 上传 JPG/PNG 背景图片并保存到 VPS 数据卷
 
+## 界面预览
+
+![轻签监控台首页](docs/homepage.png)
+
 ## 一键安装（推荐）
 
 支持使用 systemd 的 Linux x86_64 和 ARM64 VPS，不需要 Docker。使用 root 用户或带 sudo 权限的用户执行：
