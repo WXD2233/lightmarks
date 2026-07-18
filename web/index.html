@@ -262,7 +262,7 @@
     .bookmark-card.online { border-left-color: var(--green); }
     .bookmark-card.down { border-left-color: var(--red); }
     .bookmark-card.checking { border-left-color: var(--blue); }
-    .card-state { position: absolute; right: 14px; top: 11px; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 900; background: var(--orange-soft); color: var(--orange); }
+    .card-state { position: absolute; right: 14px; top: 11px; border-radius: 5px; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; font-size: 11px; line-height: 1.45; font-weight: 900; background: var(--orange-soft); color: var(--orange); }
     .online .card-state { background: var(--green-soft); color: var(--green-strong); }
     .down .card-state { background: var(--red-soft); color: var(--red); }
     .checking .card-state { background: var(--blue-soft); color: var(--blue); }
@@ -1568,7 +1568,10 @@
         card.tabIndex = -1;
         const stateLabel = document.createElement("span");
         stateLabel.className = "card-state";
-        stateLabel.textContent = status === "online" ? "健康" : status === "down" ? "异常" : status === "checking" ? "检测中" : "未检测";
+        const statusLabel = status === "online" ? "🟢 健康" : status === "down" ? "🔴 异常" : status === "checking" ? "🟡 检测中" : "⚪ 未检测";
+        stateLabel.textContent = statusLabel;
+        stateLabel.title = `状态：${statusLabel}`;
+        stateLabel.setAttribute("aria-label", stateLabel.title);
         card.append(stateLabel);
 
         const link = document.createElement("a");
